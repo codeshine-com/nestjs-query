@@ -1,6 +1,6 @@
 {
   "name": "@codeshine/nestjs-query-graphql",
-  "version": "0.30.6",
+  "version": "0.30.7-alpha.2",
   "description": "Nestjs graphql query adapter",
   "author": "doug-martin <doug@dougamartin.com>",
   "homepage": "https://github.com/doug-martin/nestjs-query#readme",
@@ -75,7 +75,7 @@
     "graphql": "^15.7.2",
     "graphql-subscriptions": "^2.0.0",
     "ts-mockito": "2.6.1",
-    "ts-morph": "12.2.0",
+    "ts-morph": "^17.0.0",
     "typescript": "4.4.4"
   }
 }

@@ -7,22 +7,24 @@ import {
   UpdateQueryBuilder,
   WhereExpression,
   EntityMetadata,
+  ObjectLiteral,
 } from 'typeorm';
 import { SoftDeleteQueryBuilder } from 'typeorm/query-builder/SoftDeleteQueryBuilder';
 import { AggregateBuilder } from './aggregate.builder';
 import { WhereBuilder } from './where.builder';
 import merge from 'lodash.merge';
+import { RelationMetadata } from 'typeorm/metadata/RelationMetadata';
 
 /**
  * @internal
  *
  * Interface that for Typeorm query builders that are sortable.
  */
-interface Sortable<Entity> extends QueryBuilder<Entity> {
+interface Sortable<Entity extends ObjectLiteral> extends QueryBuilder<Entity> {
   addOrderBy(sort: string, order?: 'ASC' | 'DESC', nulls?: 'NULLS FIRST' | 'NULLS LAST'): this;
 }
 
-interface Groupable<Entity> extends QueryBuilder<Entity> {
+interface Groupable<Entity extends ObjectLiteral> extends QueryBuilder<Entity> {
   addGroupBy(groupBy: string): this;
 }
 
@@ -31,7 +33,7 @@ interface Groupable<Entity> extends QueryBuilder<Entity> {
  *
  * Interface for `typeorm` query builders that are pageable.
  */
-interface Pageable<Entity> extends QueryBuilder<Entity> {
+interface Pageable<Entity extends ObjectLiteral> extends QueryBuilder<Entity> {
   limit(limit?: number): this;
   offset(offset?: number): this;
   skip(skip?: number): this;
@@ -44,7 +46,10 @@ interface Pageable<Entity> extends QueryBuilder<Entity> {
  * Nested record type
  */
 export interface NestedRecord<E = unknown> {
-  [keys: string]: NestedRecord<E>;
+  metadata?: RelationMetadata;
+  nested: {
+    [keys: string]: NestedRecord<E>;
+  };
 }
 
 /**
@@ -52,7 +57,7 @@ export interface NestedRecord<E = unknown> {
  *
  * Class that will convert a Query into a `typeorm` Query Builder.
  */
-export class FilterQueryBuilder<Entity> {
+export class FilterQueryBuilder<Entity extends ObjectLiteral> {
   constructor(
     readonly repo: Repository<Entity>,
     readonly whereBuilder: WhereBuilder<Entity> = new WhereBuilder<Entity>(),
@@ -231,11 +236,11 @@ export class FilterQueryBuilder<Entity> {
     if (!relationsMap) {
       return qb;
     }
-    const referencedRelations = Object.keys(relationsMap);
+    const referencedRelations = Object.keys(relationsMap.nested);
     return referencedRelations.reduce((rqb, relation) => {
       return this.applyRelationJoinsRecursive(
         rqb.leftJoin(`${alias ?? rqb.alias}.${relation}`, relation),
-        relationsMap[relation],
+        relationsMap.nested[relation],
         relation,
       );
     }, qb);
@@ -261,25 +266,41 @@ export class FilterQueryBuilder<Entity> {
     return referencedFields.filter((f) => relationNames.includes(f));
   }
 
-  getReferencedRelationsRecursive(metadata: EntityMetadata, filter: Filter<unknown> = {}): NestedRecord {
+  getReferencedRelationsRecursive(
+    metadata: EntityMetadata,
+    filter: Filter<unknown> = {},
+    relationMetadata?: RelationMetadata,
+  ): NestedRecord {
     const referencedFields = Array.from(new Set(Object.keys(filter) as (keyof Filter<unknown>)[]));
-    return referencedFields.reduce((prev, curr) => {
-      const currFilterValue = filter[curr];
-      if ((curr === 'and' || curr === 'or') && currFilterValue) {
-        for (const subFilter of currFilterValue) {
-          prev = merge(prev, this.getReferencedRelationsRecursive(metadata, subFilter));
+    return referencedFields.reduce(
+      (prev, curr) => {
+        const currFilterValue = filter[curr];
+
+        if ((curr === 'and' || curr === 'or') && Array.isArray(currFilterValue)) {
+          for (const subFilter of currFilterValue) {
+            prev.nested = merge(prev.nested, this.getReferencedRelationsRecursive(metadata, subFilter).nested);
+          }
+        } else if ((curr === 'exists' || curr === 'notExists') && !Array.isArray(currFilterValue)) {
+          prev.nested = merge(prev.nested, this.getReferencedRelationsRecursive(metadata, currFilterValue).nested);
+        } else {
+          const referencedRelation = metadata.relations.find((r) => r.propertyName === curr);
+
+          if (!referencedRelation) return prev;
+
+          prev.nested[curr] = merge(
+            prev.nested[curr] || { metadata: referencedRelation },
+            this.getReferencedRelationsRecursive(
+              referencedRelation.inverseEntityMetadata,
+              currFilterValue,
+              referencedRelation,
+            ),
+          );
         }
-      }
-      const referencedRelation = metadata.relations.find((r) => r.propertyName === curr);
-      if (!referencedRelation) return prev;
-      return {
-        ...prev,
-        [curr]: merge(
-          (prev as NestedRecord)[curr],
-          this.getReferencedRelationsRecursive(referencedRelation.inverseEntityMetadata, currFilterValue),
-        ),
-      };
-    }, {});
+
+        return prev;
+      },
+      { metadata: relationMetadata, nested: {} } as NestedRecord,
+    );
   }
 
   private get relationNames(): string[] {
