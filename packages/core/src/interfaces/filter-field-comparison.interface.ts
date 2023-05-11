@@ -41,6 +41,11 @@ export interface CommonFieldComparisonBetweenType<FieldType> {
   upper: FieldType;
 }
 
+export interface JsonFieldComparisonPathType {
+  path: string;
+  value: string;
+}
+
 /**
  * Field comparisons for all types that are NOT `null` or `boolean`.
  *
@@ -181,6 +186,13 @@ export interface StringFieldComparisons extends CommonFieldComparisonType<string
   notILike?: string;
 }
 
+export type JsonFieldComparisons = {
+  [Property in keyof Pick<
+    StringFieldComparisons,
+    'like'
+  > as `path${Capitalize<Property>}`]: JsonFieldComparisonPathType;
+};
+
 type BuiltInTypes =
   | boolean
   | boolean
@@ -211,6 +223,8 @@ type FilterFieldComparisonType<FieldType, IsKeys extends true | false> = FieldTy
   ? CommonFieldComparisonType<FieldType>
   : FieldType extends Array<infer U>
   ? CommonFieldComparisonType<U> | Filter<U> // eslint-disable-next-line @typescript-eslint/ban-types
+  : FieldType extends Record<string, unknown>
+  ? JsonFieldComparisons
   : IsKeys extends true
   ? CommonFieldComparisonType<FieldType> & StringFieldComparisons & Filter<FieldType>
   : CommonFieldComparisonType<FieldType> | Filter<FieldType>;

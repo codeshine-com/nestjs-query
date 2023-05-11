@@ -21,6 +21,7 @@ import { getOrCreateBooleanFieldComparison } from './boolean-field-comparison.ty
 import { getOrCreateNumberFieldComparison } from './number-field-comparison.type';
 import { getOrCreateDateFieldComparison } from './date-field-comparison.type';
 import { getOrCreateTimestampFieldComparison } from './timestamp-field-comparison.type';
+import { getOrCreateJsonFieldComparison } from './json-field-comparison.type';
 import { SkipIf } from '../../../decorators';
 import { getGraphqlEnumMetadata } from '../../../common';
 import { isInAllowedList } from '../helpers';
@@ -35,6 +36,7 @@ filterComparisonMap.set('BooleanFilterComparison', getOrCreateBooleanFieldCompar
 filterComparisonMap.set('DateFilterComparison', getOrCreateDateFieldComparison);
 filterComparisonMap.set('DateTimeFilterComparison', getOrCreateDateFieldComparison);
 filterComparisonMap.set('TimestampFilterComparison', getOrCreateTimestampFieldComparison);
+filterComparisonMap.set('JsonFilterComparison', getOrCreateJsonFieldComparison);
 
 const knownTypes: Set<ReturnTypeFuncValue> = new Set([
   String,
@@ -51,7 +53,12 @@ const knownTypes: Set<ReturnTypeFuncValue> = new Set([
 /** @internal */
 const getTypeName = (SomeType: ReturnTypeFuncValue): string => {
   if (knownTypes.has(SomeType) || isNamed(SomeType)) {
-    const typeName = (SomeType as { name: string }).name;
+    let typeName = (SomeType as { name: string }).name;
+
+    if (typeName === 'JSON') {
+      typeName = 'Json';
+    }
+
     return upperCaseFirst(typeName);
   }
   if (typeof SomeType === 'object') {

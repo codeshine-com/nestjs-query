@@ -1,4 +1,8 @@
-import { CommonFieldComparisonBetweenType, FilterComparisonOperators } from '@codeshine/nestjs-query-core';
+import {
+  JsonFieldComparisonPathType,
+  CommonFieldComparisonBetweenType,
+  FilterComparisonOperators,
+} from '@codeshine/nestjs-query-core';
 import { ObjectLiteral } from 'typeorm';
 
 import { randomString } from '../common';
@@ -15,6 +19,7 @@ export type EntityComparisonField<Entity, F extends keyof Entity> =
   | Entity[F]
   | Entity[F][]
   | CommonFieldComparisonBetweenType<Entity[F]>
+  | JsonFieldComparisonPathType
   | true
   | false
   | null;
@@ -88,6 +93,10 @@ export class SQLComparisonBuilder<Entity> {
     if (normalizedCmp === 'notbetween') {
       // notBetween comparison (field NOT BETWEEN x AND y)
       return this.notBetweenComparisonSQL(col, val);
+    }
+    if (normalizedCmp === 'pathlike') {
+      // pathLike comparison (JSON_EXTRACT(field, x) LIKE y)
+      return this.pathLikeComparisonSQL(col, val);
     }
     throw new Error(`unknown operator ${JSON.stringify(cmp)}`);
   }
@@ -188,9 +197,31 @@ export class SQLComparisonBuilder<Entity> {
     throw new Error(`Invalid value for not between expected {lower: val, upper: val} got ${JSON.stringify(val)}`);
   }
 
+  private pathLikeComparisonSQL<F extends keyof Entity>(
+    col: string,
+    val: EntityComparisonField<Entity, F>,
+  ): CmpSQLType {
+    if (this.isPathVal(val)) {
+      const { paramName: pathParamName } = this;
+      const { paramName: valueParamName } = this;
+      return {
+        sql: `JSON_EXTRACT(${col}, :${pathParamName}) LIKE :${valueParamName}`,
+        params: {
+          [pathParamName]: val.path,
+          [valueParamName]: val.value,
+        },
+      };
+    }
+    throw new Error(`Invalid value for not between expected {lower: val, upper: val} got ${JSON.stringify(val)}`);
+  }
+
   private isBetweenVal<F extends keyof Entity>(
     val: EntityComparisonField<Entity, F>,
   ): val is CommonFieldComparisonBetweenType<Entity[F]> {
     return val !== null && typeof val === 'object' && 'lower' in val && 'upper' in val;
+  }
+
+  private isPathVal<F extends keyof Entity>(val: EntityComparisonField<Entity, F>): val is JsonFieldComparisonPathType {
+    return val !== null && typeof val === 'object' && 'path' in val && 'value' in val;
   }
 }
