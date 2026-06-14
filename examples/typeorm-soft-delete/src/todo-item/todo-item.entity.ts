@@ -1,25 +1,55 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn, DeleteDateColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+  VirtualColumn
+} from 'typeorm'
+
+import { SubTaskEntity } from '../sub-task/sub-task.entity'
 
 @Entity({ name: 'todo_item' })
 export class TodoItemEntity {
   @PrimaryGeneratedColumn()
-  id!: number;
+  id!: number
 
   @Column()
-  title!: string;
+  title!: string
 
   @Column({ nullable: true })
-  description?: string;
+  description?: string
 
   @Column()
-  completed!: boolean;
+  completed!: boolean
+
+  @OneToMany(() => SubTaskEntity, (subTask) => subTask.todoItem)
+  subTasks!: SubTaskEntity[]
+
+  @VirtualColumn({
+    query: (alias) => `SELECT COUNT(*)
+                       FROM sub_task
+                       WHERE todo_item_id = ${alias}.id`
+  })
+  subTasksCount: number
 
   @CreateDateColumn()
-  created!: Date;
+  created!: Date
 
   @UpdateDateColumn()
-  updated!: Date;
+  updated!: Date
 
   @DeleteDateColumn()
-  deletedAt?: Date;
+  deleted?: Date
+
+  @Column({ type: 'integer', nullable: false, default: 0 })
+  priority!: number
+
+  @Column({ nullable: true })
+  createdBy?: string
+
+  @Column({ nullable: true })
+  updatedBy?: string
 }

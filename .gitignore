@@ -42,6 +42,14 @@ typings/
 # Optional npm cache directory
 .npm
 
+# Optional yarn cache directory
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+
 # Optional eslint cache
 .eslintcache
 
@@ -75,7 +83,17 @@ tsconfig.tsbuildinfo
 # intelliJ workspace files
 .idea
 
-schema.gql
-
 documentation/.docusaurus
 /**/package-lock.json
+
+# Generated Docusaurus files
+.docusaurus/
+.cache-loader/
+
+# VSCode workspace files
+.vscode
+
+.nx/cache
+.nx/workspace-data
+
+.npmrc

@@ -1,0 +1,43 @@
+{
+  "name": "query-typeorm",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/query-typeorm/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/query-typeorm",
+        "tsConfig": "packages/query-typeorm/tsconfig.lib.json",
+        "packageJson": "packages/query-typeorm/package.json",
+        "main": "packages/query-typeorm/src/index.ts",
+        "assets": ["packages/query-typeorm/*.md"],
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/packages/query-typeorm"],
+      "options": {
+        "jestConfig": "packages/query-typeorm/jest.config.ts"
+      }
+    },
+    "version": {
+      "executor": "@jscutlery/semver:version",
+      "options": {}
+    },
+    "publish": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npm publish ./dist/packages/query-typeorm --access public"
+      }
+    }
+  },
+  "tags": [],
+  "implicitDependencies": ["core"]
+}

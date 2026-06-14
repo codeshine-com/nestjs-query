@@ -3,7 +3,7 @@
  */
 export enum SortDirection {
   ASC = 'ASC',
-  DESC = 'DESC',
+  DESC = 'DESC'
 }
 
 /**
@@ -17,7 +17,7 @@ export enum SortNulls {
   /**
    * All nulls will be last.
    */
-  NULLS_LAST = 'NULLS LAST',
+  NULLS_LAST = 'NULLS LAST'
 }
 
 /**
@@ -50,13 +50,13 @@ export interface SortField<T> {
   /**
    * A field in type T to sort on.
    */
-  field: keyof T;
+  field: keyof T
   /**
    * The direction of the sort (ASC or DESC)
    */
-  direction: SortDirection;
+  direction: SortDirection
   /**
    * The order that nulls values should be sorted.
    */
-  nulls?: SortNulls;
+  nulls?: SortNulls
 }

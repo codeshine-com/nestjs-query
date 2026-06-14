@@ -1,26 +1,25 @@
-import { Class, getQueryServiceToken } from '@codeshine/nestjs-query-core';
-import { FactoryProvider } from '@nestjs/common';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository, Connection, ConnectionOptions, ObjectLiteral } from 'typeorm';
-import { TypeOrmQueryService } from './services';
+import { FactoryProvider } from '@nestjs/common'
+import { getRepositoryToken } from '@nestjs/typeorm'
+import { Class, getQueryServiceToken } from '@codeshine/nestjs-query-core'
 
-function createTypeOrmQueryServiceProvider<Entity extends ObjectLiteral>(
+import type { DataSource, Repository } from 'typeorm'
+
+import { TypeOrmQueryService } from './services'
+
+function createTypeOrmQueryServiceProvider<Entity>(
   EntityClass: Class<Entity>,
-  connection?: Connection | ConnectionOptions | string,
+  dataSource?: DataSource | string
 ): FactoryProvider {
   return {
     provide: getQueryServiceToken(EntityClass),
     useFactory(repo: Repository<Entity>) {
-      return new TypeOrmQueryService(repo);
+      return new TypeOrmQueryService(repo)
     },
-    inject: [getRepositoryToken(EntityClass, connection)],
-  };
+    inject: [getRepositoryToken(EntityClass, dataSource)]
+  }
 }
 
 export const createTypeOrmQueryServiceProviders = (
-  entities: Class<ObjectLiteral>[],
-  connection?: Connection | ConnectionOptions | string,
-): FactoryProvider[] =>
-  entities.map((entity) => {
-    return createTypeOrmQueryServiceProvider(entity, connection);
-  });
+  entities: Class<unknown>[],
+  dataSource?: DataSource | string
+): FactoryProvider[] => entities.map((entity) => createTypeOrmQueryServiceProvider(entity, dataSource))

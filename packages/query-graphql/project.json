@@ -1,0 +1,44 @@
+{
+  "name": "query-graphql",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/query-graphql/src",
+  "projectType": "library",
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/packages/query-graphql"],
+      "options": {
+        "jestConfig": "packages/query-graphql/jest.config.ts"
+      }
+    },
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/query-graphql",
+        "tsConfig": "packages/query-graphql/tsconfig.lib.json",
+        "packageJson": "packages/query-graphql/package.json",
+        "main": "packages/query-graphql/src/index.ts",
+        "assets": ["packages/query-graphql/*.md"],
+        "updateBuildableProjectDepsInPackageJson": true,
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "version": {
+      "executor": "@jscutlery/semver:version",
+      "options": {}
+    },
+    "publish": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npm publish ./dist/packages/query-graphql --access public"
+      }
+    }
+  },
+  "tags": [],
+  "implicitDependencies": ["core"]
+}

@@ -2,8 +2,8 @@
 title: v0.22.x to v0.23.x
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
 
 ## Offset Paging Strategy [BREAKING CHANGE]
 
@@ -151,33 +151,30 @@ In the latest version, we have transitioned to a interceptor/param decorator pat
 Old way
 
 ```ts
-import { QueryService, InjectQueryService } from '@codeshine/nestjs-query-core';
-import { CRUDResolver } from '@codeshine/nestjs-query-graphql';
-import { Resolver, Query, Args } from '@nestjs/graphql';
-import { TodoItemDTO } from './dto/todo-item.dto';
-import { TodoItemEntity } from './todo-item.entity';
+import { QueryService, InjectQueryService } from '@codeshine/nestjs-query-core'
+import { CRUDResolver } from '@codeshine/nestjs-query-graphql'
+import { Resolver, Query, Args } from '@nestjs/graphql'
+import { TodoItemDTO } from './dto/todo-item.dto'
+import { TodoItemEntity } from './todo-item.entity'
 
 @Resolver(() => TodoItemDTO)
 export class TodoItemResolver {
   constructor(
     @InjectQueryService(TodoItemEntity) readonly service: QueryService<TodoItemEntity>,
-    @InjectAuthorizer(TodoItemDTO) readonly authorizer: Authorizer<TodoItemDTO>,
+    @InjectAuthorizer(TodoItemDTO) readonly authorizer: Authorizer<TodoItemDTO>
   ) {}
 
   @Query(() => TodoItemConnection)
-  async uncompletedTodoItems(
-    @Args() query: TodoItemQuery,
-    @Context() context: unknown,
-  ): Promise<ConnectionType<TodoItemDTO>> {
+  async uncompletedTodoItems(@Args() query: TodoItemQuery, @Context() context: unknown): Promise<ConnectionType<TodoItemDTO>> {
     // add the completed filter the user provided filter
-    const authFilter = this.authorizer.authorize(context);
-    const filter: Filter<TodoItemDTO> = mergeFilter(query.filter ?? {}, { completed: { is: false } });
-    const uncompletedQuery = mergeQuery(query, { filter: mergeFilter(filter, authFilter) });
+    const authFilter = this.authorizer.authorize(context)
+    const filter: Filter<TodoItemDTO> = mergeFilter(query.filter ?? {}, { completed: { is: false } })
+    const uncompletedQuery = mergeQuery(query, { filter: mergeFilter(filter, authFilter) })
     return TodoItemConnection.createFromPromise(
       (q) => this.service.query(q),
       uncompletedQuery,
-      (q) => this.service.count(q),
-    );
+      (q) => this.service.count(q)
+    )
   }
 }
 ```
@@ -185,12 +182,12 @@ export class TodoItemResolver {
 New
 
 ```ts
-import { Filter, InjectQueryService, mergeFilter, mergeQuery, QueryService } from '@codeshine/nestjs-query-core';
-import { AuthorizerInterceptor, AuthorizerFilter, ConnectionType } from '@codeshine/nestjs-query-graphql';
-import { Args, Query, Resolver } from '@nestjs/graphql';
-import { UseInterceptors } from '@nestjs/common';
-import { TodoItemDTO } from './dto/todo-item.dto';
-import { TodoItemConnection, TodoItemQuery } from './types';
+import { Filter, InjectQueryService, mergeFilter, mergeQuery, QueryService } from '@codeshine/nestjs-query-core'
+import { AuthorizerInterceptor, AuthorizerFilter, ConnectionType } from '@codeshine/nestjs-query-graphql'
+import { Args, Query, Resolver } from '@nestjs/graphql'
+import { UseInterceptors } from '@nestjs/common'
+import { TodoItemDTO } from './dto/todo-item.dto'
+import { TodoItemConnection, TodoItemQuery } from './types'
 
 @Resolver(() => TodoItemDTO)
 @UseInterceptors(AuthorizerInterceptor(TodoItemDTO))
@@ -201,16 +198,16 @@ export class TodoItemResolver {
   @Query(() => TodoItemConnection)
   async uncompletedTodoItems(
     @Args() query: TodoItemQuery,
-    @AuthorizerFilter() authFilter: Filter<TodoItemDTO>,
+    @AuthorizerFilter() authFilter: Filter<TodoItemDTO>
   ): Promise<ConnectionType<TodoItemDTO>> {
     // add the completed filter the user provided filter
-    const filter: Filter<TodoItemDTO> = mergeFilter(query.filter ?? {}, { completed: { is: false } });
-    const uncompletedQuery = mergeQuery(query, { filter: mergeFilter(filter, authFilter) });
+    const filter: Filter<TodoItemDTO> = mergeFilter(query.filter ?? {}, { completed: { is: false } })
+    const uncompletedQuery = mergeQuery(query, { filter: mergeFilter(filter, authFilter) })
     return TodoItemConnection.createFromPromise(
       (q) => this.service.query(q),
       uncompletedQuery,
-      (q) => this.service.count(q),
-    );
+      (q) => this.service.count(q)
+    )
   }
 }
 ```
@@ -228,13 +225,13 @@ As a demonstration of the flexibility of the new hooks implementation, lets use 
 would not have been possible previously)
 
 ```ts {14-15}
-import { InjectQueryService, mergeFilter, QueryService, UpdateManyResponse } from '@codeshine/nestjs-query-core';
-import { HookTypes, HookInterceptor, MutationHookArgs, UpdateManyResponseType } from '@codeshine/nestjs-query-graphql';
-import { UseInterceptors } from '@nestjs/common';
-import { Mutation, Resolver } from '@nestjs/graphql';
-import { TodoItemDTO } from './dto/todo-item.dto';
-import { TodoItemEntity } from './todo-item.entity';
-import { UpdateManyTodoItemsArgs } from './types';
+import { InjectQueryService, mergeFilter, QueryService, UpdateManyResponse } from '@codeshine/nestjs-query-core'
+import { HookTypes, HookInterceptor, MutationHookArgs, UpdateManyResponseType } from '@codeshine/nestjs-query-graphql'
+import { UseInterceptors } from '@nestjs/common'
+import { Mutation, Resolver } from '@nestjs/graphql'
+import { TodoItemDTO } from './dto/todo-item.dto'
+import { TodoItemEntity } from './todo-item.entity'
+import { UpdateManyTodoItemsArgs } from './types'
 
 @Resolver(() => TodoItemDTO)
 export class TodoItemResolver {
@@ -243,10 +240,7 @@ export class TodoItemResolver {
   @Mutation(() => UpdateManyResponseType())
   @UseInterceptors(HookInterceptor(HookTypes.BEFORE_UPDATE_MANY, TodoItemDTO))
   markTodoItemsAsCompleted(@MutationHookArgs() { input }: UpdateManyTodoItemsArgs): Promise<UpdateManyResponse> {
-    return this.service.updateMany(
-      { ...input.update, completed: false },
-      mergeFilter(input.filter, { completed: { is: false } }),
-    );
+    return this.service.updateMany({ ...input.update, completed: false }, mergeFilter(input.filter, { completed: { is: false } }))
   }
 }
 ```
@@ -267,7 +261,7 @@ on the input.
 
 ```ts
 interface CreatedBy {
-  createdBy: string;
+  createdBy: string
 }
 
 @Injectable()
@@ -276,21 +270,21 @@ export class CreatedByHook<T extends CreatedBy>
 {
   constructor(readonly userService: UserService) {}
 
-  run(instance: CreateManyInputType<T>, context: GqlContext): Promise<CreateManyInputType<T>>;
-  run(instance: CreateOneInputType<T>, context: GqlContext): Promise<CreateOneInputType<T>>;
+  run(instance: CreateManyInputType<T>, context: GqlContext): Promise<CreateManyInputType<T>>
+  run(instance: CreateOneInputType<T>, context: GqlContext): Promise<CreateOneInputType<T>>
   async run(
     instance: CreateOneInputType<T> | CreateManyInputType<T>,
-    context: GqlContext,
+    context: GqlContext
   ): Promise<CreateOneInputType<T> | CreateManyInputType<T>> {
-    const createdBy = await this.userService.getUserEmail(context.req.userId);
+    const createdBy = await this.userService.getUserEmail(context.req.userId)
     if (Array.isArray(instance.input)) {
       // eslint-disable-next-line no-param-reassign
-      instance.input = instance.input.map((c) => ({ ...c, createdBy }));
-      return instance;
+      instance.input = instance.input.map((c) => ({ ...c, createdBy }))
+      return instance
     }
     // eslint-disable-next-line no-param-reassign
-    instance.input.createdBy = createdBy;
-    return instance;
+    instance.input.createdBy = createdBy
+    return instance
   }
 }
 ```
@@ -305,14 +299,14 @@ export class TodoItemInputDTO {
   @IsString()
   @MaxLength(20)
   @Field()
-  title!: string;
+  title!: string
 
   @IsBoolean()
   @Field()
-  completed!: boolean;
+  completed!: boolean
 
   // don't annotate with field because its set by the hook
-  createdBy!: string;
+  createdBy!: string
 }
 ```
 
@@ -327,16 +321,16 @@ generating a resolver automatically.
 In this example we create a custom resolver that extends `CRUDResolver`.
 
 ```ts title="todo-item.resolver.ts"
-import { QueryService, InjectQueryService } from '@codeshine/nestjs-query-core';
-import { CRUDResolver } from '@codeshine/nestjs-query-graphql';
-import { Resolver, Query, Args } from '@nestjs/graphql';
-import { TodoItemDTO } from './dto/todo-item.dto';
-import { TodoItemEntity } from './todo-item.entity';
+import { QueryService, InjectQueryService } from '@codeshine/nestjs-query-core'
+import { CRUDResolver } from '@codeshine/nestjs-query-graphql'
+import { Resolver, Query, Args } from '@nestjs/graphql'
+import { TodoItemDTO } from './dto/todo-item.dto'
+import { TodoItemEntity } from './todo-item.entity'
 
 @Resolver(() => TodoItemDTO)
 export class TodoItemResolver extends CRUDResolver(TodoItemDTO) {
   constructor(@InjectQueryService(TodoItemEntity) readonly service: QueryService<TodoItemEntity>) {
-    super(service);
+    super(service)
   }
 }
 ```
@@ -346,21 +340,21 @@ instead you can specify the `dtos` option which just takes in `DTOClass`, `Creat
 set up all of additional providers to hooks, authorizers and other features.
 
 ```ts title="todo-item.module.ts" {9,13}
-import { NestjsQueryGraphQLModule } from '@codeshine/nestjs-query-graphql';
-import { NestjsQueryTypeOrmModule } from '@codeshine/nestjs-query-typeorm';
-import { Module } from '@nestjs/common';
-import { TodoItemDTO } from './todo-item.dto';
-import { TodoItemEntity } from './todo-item.entity';
-import { TodoItemResolver } from './todo-item.resolver';
+import { NestjsQueryGraphQLModule } from '@codeshine/nestjs-query-graphql'
+import { NestjsQueryTypeOrmModule } from '@codeshine/nestjs-query-typeorm'
+import { Module } from '@nestjs/common'
+import { TodoItemDTO } from './todo-item.dto'
+import { TodoItemEntity } from './todo-item.entity'
+import { TodoItemResolver } from './todo-item.resolver'
 
 @Module({
   providers: [TodoItemResolver],
   imports: [
     NestjsQueryGraphQLModule.forFeature({
       imports: [NestjsQueryTypeOrmModule.forFeature([TodoItemEntity])],
-      dtos: [{ DTOClass: TodoItemDTO }],
-    }),
-  ],
+      dtos: [{ DTOClass: TodoItemDTO }]
+    })
+  ]
 })
 export class TodoItemModule {}
 ```

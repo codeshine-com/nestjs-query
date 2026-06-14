@@ -2,8 +2,8 @@
 title: Assemblers
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
 
 Assemblers are used to translate your DTO into the underlying database type and back.
 
@@ -60,19 +60,19 @@ If you find yourself in a scenario where you need to compute values and you dont
 Lets take a simple example, where we have `TodoItemDTO` and we want to compute the `age`.
 
 ```ts title="todo-item.assembler.ts"
-import { Assembler, ClassTransformerAssembler } from '@codeshine/nestjs-query-core';
-import { TodoItemDTO } from './dto/todo-item.dto';
-import { TodoItemEntity } from './todo-item.entity';
+import { Assembler, ClassTransformerAssembler } from '@codeshine/nestjs-query-core'
+import { TodoItemDTO } from './dto/todo-item.dto'
+import { TodoItemEntity } from './todo-item.entity'
 
 // `@Assembler` decorator will register the assembler with `nestjs-query` and
 // the QueryService service will be able to auto discover it.
 @Assembler(TodoItemDTO, TodoItemEntity)
 export class TodoItemAssembler extends ClassTransformerAssembler<TodoItemDTO, TodoItemEntity> {
   convertToDTO(entity: TodoItemEntity): TodoItemDTO {
-    const dto = super.convertToDTO(entity);
+    const dto = super.convertToDTO(entity)
     // compute the age
-    dto.age = Date.now() - entity.created.getMilliseconds();
-    return dto;
+    dto.age = Date.now() - entity.created.getMilliseconds()
+    return dto
   }
 }
 ```
@@ -86,19 +86,19 @@ To create your own `Assembler` extend the `AbstractAssembler`.
 Lets assume we have the following `UserDTO`.
 
 ```ts title="user.dto.ts"
-import { FilterableField } from '@codeshine/nestjs-query-graphql';
-import { ObjectType } from '@nestjs/graphql';
+import { FilterableField } from '@codeshine/nestjs-query-graphql'
+import { ObjectType } from '@nestjs/graphql'
 
 @ObjectType('User')
 class UserDTO {
   @FilterableField()
-  firstName!: string;
+  firstName!: string
 
   @FilterableField()
-  lastName!: string;
+  lastName!: string
 
   @FilterableField()
-  emailAddress!: string;
+  emailAddress!: string
 }
 ```
 
@@ -116,18 +116,18 @@ But you inherited a DB schema that has names that are not as user friendly.
 <TabItem value="typeorm">
 
 ```ts title="user.entity.ts"
-import { Entity, Column } from 'typeorm';
+import { Entity, Column } from 'typeorm'
 
 @Entity()
 class UserEntity {
   @Column()
-  first!: string;
+  first!: string
 
   @Column()
-  last!: string;
+  last!: string
 
   @Column()
-  email!: string;
+  email!: string
 }
 ```
 
@@ -135,18 +135,18 @@ class UserEntity {
 <TabItem value="sequelize">
 
 ```ts title="user.entity.ts"
-import { Table, Column, Model } from 'sequelize-typescript';
+import { Table, Column, Model } from 'sequelize-typescript'
 
 @Table
 export class UserEntity extends Model<UserEntity, Partial<UserEntity>> {
   @Column
-  first!: string;
+  first!: string
 
   @Column
-  last!: string;
+  last!: string
 
   @Column
-  email!: string;
+  email!: string
 }
 ```
 
@@ -154,22 +154,22 @@ export class UserEntity extends Model<UserEntity, Partial<UserEntity>> {
 <TabItem value="mongoose">
 
 ```ts title="user.entity.ts"
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
+import { Document } from 'mongoose'
 
 @Schema()
 export class UserEntity extends Document {
   @Prop({ required: true })
-  first!: string;
+  first!: string
 
   @Prop({ required: true })
-  last!: string;
+  last!: string
 
   @Prop({ required: true })
-  email!: string;
+  email!: string
 }
 
-export const UserEntityEntitySchema = SchemaFactory.createForClass(UserEntity);
+export const UserEntityEntitySchema = SchemaFactory.createForClass(UserEntity)
 ```
 
 </TabItem>
@@ -184,10 +184,10 @@ import {
   Query,
   transformQuery,
   transformAggregateQuery,
-  transformAggregateResponse,
-} from '@codeshine/nestjs-query-core';
-import { UserDTO } from './dto/user.dto';
-import { UserEntity } from './user.entity';
+  transformAggregateResponse
+} from '@codeshine/nestjs-query-core'
+import { UserDTO } from './dto/user.dto'
+import { UserEntity } from './user.entity'
 
 // `@Assembler` decorator will register the assembler with `nestjs-query` and
 // the QueryService service will be able to auto discover it.
@@ -197,52 +197,52 @@ export class UserAssembler extends AbstractAssembler<UserDTO, UserEntity> {
     return transformQuery(query, {
       firstName: 'first',
       lastName: 'last',
-      emailAddress: 'email',
-    });
+      emailAddress: 'email'
+    })
   }
 
   convertToDTO(entity: UserEntity): UserDTO {
-    const dto = new UserDTO();
-    dto.firstName = entity.first;
-    dto.lastName = entity.last;
-    return dto;
+    const dto = new UserDTO()
+    dto.firstName = entity.first
+    dto.lastName = entity.last
+    return dto
   }
 
   convertToEntity(dto: UserDTO): UserEntity {
-    const entity = new UserEntity();
-    entity.first = dto.firstName;
-    entity.last = dto.lastName;
-    return entity;
+    const entity = new UserEntity()
+    entity.first = dto.firstName
+    entity.last = dto.lastName
+    return entity
   }
 
   convertAggregateQuery(aggregate: AggregateQuery<TestDTO>): AggregateQuery<TestEntity> {
     return transformAggregateQuery(aggregate, {
       firstName: 'first',
       lastName: 'last',
-      emailAddress: 'email',
-    });
+      emailAddress: 'email'
+    })
   }
 
   convertAggregateResponse(aggregate: AggregateResponse<TestEntity>): AggregateResponse<TestDTO> {
     return transformAggregateResponse(aggregate, {
       first: 'firstName',
       last: 'lastName',
-      email: 'emailAddress',
-    });
+      email: 'emailAddress'
+    })
   }
 
   convertToCreateEntity({ firstName, lastName }: DeepPartial<TestDTO>): DeepPartial<TestEntity> {
     return {
       first: firstName,
-      last: lastName,
-    };
+      last: lastName
+    }
   }
 
   convertToUpdateEntity({ firstName, lastName }: DeepPartial<TestDTO>): DeepPartial<TestEntity> {
     return {
       first: firstName,
-      last: lastName,
-    };
+      last: lastName
+    }
   }
 }
 ```
@@ -388,9 +388,9 @@ Before using the decorator you need to register your Assembler with `nestjs-quer
 ### Module
 
 ```ts title="user.module.ts" {10}
-import { NestjsQueryGraphQLModule } from '@codeshine/nestjs-query-graphql';
-import { Module } from '@nestjs/common';
-import { UserDTO } from './user.dto';
+import { NestjsQueryGraphQLModule } from '@codeshine/nestjs-query-graphql'
+import { Module } from '@nestjs/common'
+import { UserDTO } from './user.dto'
 
 @Module({
   providers: [TodoItemResolver],
@@ -400,9 +400,9 @@ import { UserDTO } from './user.dto';
         /* set up your entity with a nestjs-query persitence package */
       ],
       assemblers: [UserAssembler],
-      resolvers: [],
-    }),
-  ],
+      resolvers: []
+    })
+  ]
 })
 export class UserModule {}
 ```
@@ -412,9 +412,9 @@ export class UserModule {}
 If you want your assembler to be used by the auto-generated resolver you can specify the `AssemblerClass` option.
 
 ```ts title="user.module.ts" {10,14}
-import { NestjsQueryGraphQLModule } from '@codeshine/nestjs-query-graphql';
-import { Module } from '@nestjs/common';
-import { UserDTO } from './user.dto';
+import { NestjsQueryGraphQLModule } from '@codeshine/nestjs-query-graphql'
+import { Module } from '@nestjs/common'
+import { UserDTO } from './user.dto'
 
 @Module({
   providers: [TodoItemResolver],
@@ -427,11 +427,11 @@ import { UserDTO } from './user.dto';
       resolvers: [
         {
           DTOClass: UserDTO,
-          AssemblerClass: UserAssembler,
-        },
-      ],
-    }),
-  ],
+          AssemblerClass: UserAssembler
+        }
+      ]
+    })
+  ]
 })
 export class UserModule {}
 ```
@@ -441,15 +441,15 @@ export class UserModule {}
 If you are manually defining you resolver or want to use the `AssemblerQueryService` in another service use the `@InjectAssemblerQueryService` decorator.
 
 ```ts title="user.resolver.ts" {8}
-import { CRUDResolver } from '@codeshine/nestjs-query-graphql';
-import { Resolver } from '@nestjs/graphql';
-import { UserDTO } from './user.dto';
-import { UserAssembler } from './user.assembler';
+import { CRUDResolver } from '@codeshine/nestjs-query-graphql'
+import { Resolver } from '@nestjs/graphql'
+import { UserDTO } from './user.dto'
+import { UserAssembler } from './user.assembler'
 
 @Resolver(() => UserDTO)
 export class UserResolver extends CRUDResolver(UserDTO) {
   constructor(@InjectAssemblerQueryService(UserAssembler) readonly service: QueryService<UserDTO>) {
-    super(service);
+    super(service)
   }
 }
 ```

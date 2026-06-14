@@ -1,18 +1,21 @@
-import { Class, UpdateManyResponse } from '@codeshine/nestjs-query-core';
-import { Field, Int, ObjectType } from '@nestjs/graphql';
+import { Directive, Field, Int, ObjectType } from '@nestjs/graphql'
+import { Class, UpdateManyResponse } from '@codeshine/nestjs-query-core'
 
 /** @internal */
-let updateManyResponseType: Class<UpdateManyResponse> | null = null;
+let updateManyResponseType: Class<UpdateManyResponse> | null = null
 
 export const UpdateManyResponseType = (): Class<UpdateManyResponse> => {
   if (updateManyResponseType) {
-    return updateManyResponseType;
+    return updateManyResponseType
   }
+
+  @Directive('@shareable')
   @ObjectType('UpdateManyResponse')
   class UpdateManyResponseTypeImpl implements UpdateManyResponse {
     @Field(() => Int, { description: 'The number of records updated.' })
-    updatedCount!: number;
+    updatedCount!: number
   }
-  updateManyResponseType = UpdateManyResponseTypeImpl;
-  return updateManyResponseType;
-};
+
+  updateManyResponseType = UpdateManyResponseTypeImpl
+  return updateManyResponseType
+}

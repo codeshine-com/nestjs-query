@@ -29,9 +29,10 @@ export class TodoItemService extends TypeOrmQueryService<TodoItemEntity> {
     return { todoItem, subTasks };
   }
 }
+
 ```
 
-Now lets write some tests!
+Now lets write some tests! 
 
 ```ts title="todo-item.service.spec.ts"
 import { Test, TestingModule } from '@nestjs/testing';
@@ -50,13 +51,13 @@ const oneTodo: TodoItemEntity = plainToClass(TodoItemEntity, { id: 1, title: 'A 
 describe('TodosItemService', () => {
   let service: TodoItemService; // Removed type, compared to the nestjs examples
 
-  // We mock the responses of the two services.
+  // We mock the responses of the two services. 
   // The mocks in this example are very simple, but they can be more complex, depending on the test cases.
 
   const mockedSubTaskService = {
     // mock the query method that is used by getWithSubTasks
     query: jest.fn((query) => Promise.resolve(subTasks)),
-  };
+  };  
   const mockedRepo = {
     // mock the repo `findOneOrFail`
     findOneOrFail: jest.fn((id) => Promise.resolve(oneTodo)),
@@ -114,6 +115,7 @@ describe('TodosItemService', () => {
     });
   });
 });
+
 ```
 
 ## Mocking Inherited Methods
@@ -128,11 +130,11 @@ async getWithSubTasks(id: number): Promise<{ todoItem: TodoItemEntity; subTasks:
   const subTasks = await this.subTaskService.query({ filter: { todoItemId: { eq: id } } });
   return { todoItem, subTasks };
 }
-```
+```              
 
 To mock the `getById` method we can create a new `spy` with a mock implementation
 
-```ts
+```ts 
 const getByIdSpy = jest.spyOn(service, 'getById').mockImplementation(() => Promise.resolve(oneTodo));
 ```
 
@@ -184,7 +186,7 @@ describe('getWithSubTasks', () => {
     // Ensure that the getById spy is called one
     expect(getByIdSpy).toHaveBeenCalledTimes(1);
     expect(getByIdSpy).toHaveBeenCalledWith(oneTodo.id);
-    // Ensure that that the querySpy was not called
+    // Ensure that that the querySpy was not called  
     expect(querySpy).not.toHaveBeenCalled();
   });
 });

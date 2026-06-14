@@ -8,10 +8,11 @@ This package is built using [sequelize](https://sequelize.org/) and [@nestjs/seq
 
 ## Installation
 
-[Installation Docs](../../introduction/install.md#nestjs-queryquery-sequelize)
+[Installation Docs](../../introduction/install.md#codeshinenestjs-query-sequelize)
 
 ## Docs
 
-- Read the [QueryService docs](../services.mdx)
-- [Custom Service](./custom-service.md)
-- [Serialization](./serialization.md) - How to serialize `sequelize` models.
+* Read the [QueryService docs](../services.mdx)
+* [Custom Service](./custom-service.md)
+* [Serialization](./serialization.md) - How to serialize `sequelize` models. 
+

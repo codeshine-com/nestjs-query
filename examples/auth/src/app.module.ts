@@ -1,39 +1,34 @@
-import { Module } from '@nestjs/common';
-import { GraphQLModule } from '@nestjs/graphql';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { TagModule } from './tag/tag.module';
-import { TodoItemModule } from './todo-item/todo-item.module';
-import { SubTaskModule } from './sub-task/sub-task.module';
-import { typeormOrmConfig } from '../../helpers';
-import { AuthModule } from './auth/auth.module';
-import { UserModule } from './user/user.module';
+import { ApolloDriver } from '@nestjs/apollo'
+import { Module } from '@nestjs/common'
+import { GraphQLModule } from '@nestjs/graphql'
+import { TypeOrmModule } from '@nestjs/typeorm'
 
-interface HeadersContainer {
-  headers?: Record<string, string>;
-}
-interface ContextArgs {
-  req?: HeadersContainer;
-  connection?: { context: HeadersContainer };
-}
+import { formatGraphqlError, typeormOrmConfig } from '../../helpers'
+import { AuthModule } from './auth/auth.module'
+import { SubTaskModule } from './sub-task/sub-task.module'
+import { TagModule } from './tag/tag.module'
+import { TodoItemModule } from './todo-item/todo-item.module'
+import { UserModule } from './user/user.module'
 
 @Module({
   imports: [
     TypeOrmModule.forRoot(typeormOrmConfig('auth')),
     GraphQLModule.forRoot({
-      autoSchemaFile: 'schema.gql',
+      driver: ApolloDriver,
+      autoSchemaFile: 'examples/auth/schema.gql',
       installSubscriptionHandlers: true,
       subscriptions: {
         'subscriptions-transport-ws': {
-          onConnect: (connectionParams: unknown) => ({ headers: connectionParams }),
-        },
+          onConnect: (connectionParams: unknown) => ({ headers: connectionParams })
+        }
       },
-      context: ({ req, connection }: ContextArgs) => ({ req: { ...req, ...connection?.context } }),
+      formatError: formatGraphqlError
     }),
     AuthModule,
     UserModule,
     TodoItemModule,
     SubTaskModule,
-    TagModule,
-  ],
+    TagModule
+  ]
 })
 export class AppModule {}

@@ -1,40 +1,44 @@
 /* eslint-disable no-param-reassign */
+import { GraphQLISODateTime, ID, ObjectType } from '@nestjs/graphql'
 import {
-  FilterableField,
-  FilterableCursorConnection,
-  BeforeCreateOne,
   BeforeCreateMany,
-  BeforeUpdateOne,
+  BeforeCreateOne,
   BeforeUpdateMany,
-  KeySet,
-} from '@codeshine/nestjs-query-graphql';
-import { ObjectType, ID, GraphQLISODateTime } from '@nestjs/graphql';
-import { CreatedByHook, UpdatedByHook } from '../../hooks';
-import { TodoItemDTO } from '../../todo-item/dto/todo-item.dto';
+  BeforeUpdateOne,
+  FilterableCursorConnection,
+  FilterableField,
+  KeySet
+} from '@codeshine/nestjs-query-graphql'
+
+import { CreatedByHook, UpdatedByHook } from '../../hooks'
+import { TodoItemDTO } from '../../todo-item/dto/todo-item.dto'
 
 @ObjectType('Tag')
 @KeySet(['id'])
-@FilterableCursorConnection('todoItems', () => TodoItemDTO)
+@FilterableCursorConnection('todoItems', () => TodoItemDTO, {
+  update: { enabled: true },
+  remove: { enabled: true }
+})
 @BeforeCreateOne(CreatedByHook)
 @BeforeCreateMany(CreatedByHook)
 @BeforeUpdateOne(UpdatedByHook)
 @BeforeUpdateMany(UpdatedByHook)
 export class TagDTO {
   @FilterableField(() => ID)
-  id!: number;
+  id!: number
 
   @FilterableField()
-  name!: string;
+  name!: string
 
   @FilterableField(() => GraphQLISODateTime)
-  created!: Date;
+  created!: Date
 
   @FilterableField(() => GraphQLISODateTime)
-  updated!: Date;
+  updated!: Date
 
   @FilterableField({ nullable: true })
-  createdBy?: string;
+  createdBy?: string
 
   @FilterableField({ nullable: true })
-  updatedBy?: string;
+  updatedBy?: string
 }

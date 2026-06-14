@@ -1,12 +1,13 @@
-import { ObjectType } from '@nestjs/graphql';
-import { NestjsQueryGraphQLModule } from '../src';
-import { FilterableField } from '../src/decorators/filterable-field.decorator';
+import { ObjectType } from '@nestjs/graphql'
+import { NestjsQueryGraphQLModule } from '@codeshine/nestjs-query-graphql'
+
+import { FilterableField } from '../src/decorators/filterable-field.decorator'
 
 describe('NestjsQueryGraphQLModule', () => {
   @ObjectType()
   class TestDTO {
     @FilterableField()
-    name!: string;
+    name!: string
   }
 
   it('should create a module', () => {
@@ -15,15 +16,15 @@ describe('NestjsQueryGraphQLModule', () => {
       resolvers: [
         {
           DTOClass: TestDTO,
-          EntityClass: TestDTO,
-        },
-      ],
-    });
-    expect(graphqlModule.imports).toHaveLength(1);
-    expect(graphqlModule.module).toBe(NestjsQueryGraphQLModule);
-    expect(graphqlModule.providers).toHaveLength(3);
-    expect(graphqlModule.exports).toHaveLength(4);
-  });
+          EntityClass: TestDTO
+        }
+      ]
+    })
+    expect(graphqlModule.imports).toHaveLength(1)
+    expect(graphqlModule.module).toBe(NestjsQueryGraphQLModule)
+    expect(graphqlModule.providers).toHaveLength(3)
+    expect(graphqlModule.exports).toHaveLength(4)
+  })
 
   it('should allow a defaultFilter for read options', () => {
     const graphqlModule = NestjsQueryGraphQLModule.forFeature({
@@ -32,13 +33,13 @@ describe('NestjsQueryGraphQLModule', () => {
         {
           DTOClass: TestDTO,
           EntityClass: TestDTO,
-          read: { defaultFilter: { name: { eq: 'foo' } } },
-        },
-      ],
-    });
-    expect(graphqlModule.imports).toHaveLength(1);
-    expect(graphqlModule.module).toBe(NestjsQueryGraphQLModule);
-    expect(graphqlModule.providers).toHaveLength(3);
-    expect(graphqlModule.exports).toHaveLength(4);
-  });
-});
+          read: { defaultFilter: { name: { eq: 'foo' } } }
+        }
+      ]
+    })
+    expect(graphqlModule.imports).toHaveLength(1)
+    expect(graphqlModule.module).toBe(NestjsQueryGraphQLModule)
+    expect(graphqlModule.providers).toHaveLength(3)
+    expect(graphqlModule.exports).toHaveLength(4)
+  })
+})

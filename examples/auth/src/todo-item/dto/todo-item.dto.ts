@@ -1,17 +1,19 @@
+import { UnauthorizedException } from '@nestjs/common'
+import { Field, GraphQLISODateTime, ID, ObjectType } from '@nestjs/graphql'
 import {
-  FilterableField,
-  Authorize,
-  Relation,
-  FilterableCursorConnection,
-  QueryOptions,
   AuthorizationContext,
-} from '@codeshine/nestjs-query-graphql';
-import { ObjectType, ID, GraphQLISODateTime, Field } from '@nestjs/graphql';
-import { UnauthorizedException } from '@nestjs/common';
-import { SubTaskDTO } from '../../sub-task/dto/sub-task.dto';
-import { TagDTO } from '../../tag/dto/tag.dto';
-import { UserDTO } from '../../user/user.dto';
-import { UserContext } from '../../auth/auth.interfaces';
+  Authorize,
+  FilterableCursorConnection,
+  FilterableField,
+  OperationGroup,
+  QueryOptions,
+  Relation
+} from '@codeshine/nestjs-query-graphql'
+
+import { UserContext } from '../../auth/auth.interfaces'
+import { SubTaskDTO } from '../../sub-task/dto/sub-task.dto'
+import { TagDTO } from '../../tag/dto/tag.dto'
+import { UserDTO } from '../../user/user.dto'
 
 @ObjectType('TodoItem')
 @QueryOptions({ enableTotalCount: true })
@@ -19,50 +21,56 @@ import { UserContext } from '../../auth/auth.interfaces';
   authorize: (context: UserContext, authorizationContext?: AuthorizationContext) => {
     if (
       context.req.user.username === 'nestjs-query-3' &&
-      (authorizationContext?.operationGroup === 'read' || authorizationContext?.operationGroup === 'aggregate')
+      (authorizationContext?.operationGroup === OperationGroup.READ ||
+        authorizationContext?.operationGroup === OperationGroup.AGGREGATE)
     ) {
-      return {};
+      return {}
     }
-    if (context.req.user.username === 'nestjs-query-3' && authorizationContext?.operationGroup === 'create') {
-      throw new UnauthorizedException();
+    if (context.req.user.username === 'nestjs-query-3' && authorizationContext?.operationGroup === OperationGroup.CREATE) {
+      throw new UnauthorizedException()
     }
-    return { ownerId: { eq: context.req.user.id } };
-  },
+    return { ownerId: { eq: context.req.user.id } }
+  }
 })
-@Relation('owner', () => UserDTO, { disableRemove: true, disableUpdate: true })
-@FilterableCursorConnection('subTasks', () => SubTaskDTO, { disableRemove: true })
-@FilterableCursorConnection('tags', () => TagDTO)
+@Relation('owner', () => UserDTO)
+@FilterableCursorConnection('subTasks', () => SubTaskDTO, {
+  update: { enabled: true }
+})
+@FilterableCursorConnection('tags', () => TagDTO, {
+  update: { enabled: true },
+  remove: { enabled: true }
+})
 export class TodoItemDTO {
   @FilterableField(() => ID)
-  id!: number;
+  id!: number
 
   @FilterableField()
-  title!: string;
+  title!: string
 
   @FilterableField({ nullable: true })
-  description?: string;
+  description?: string
 
   @FilterableField()
-  completed!: boolean;
+  completed!: boolean
 
   @FilterableField(() => GraphQLISODateTime)
-  created!: Date;
+  created!: Date
 
   @FilterableField(() => GraphQLISODateTime)
-  updated!: Date;
+  updated!: Date
 
   @Field()
-  age!: number;
+  age!: number
 
   @FilterableField()
-  priority!: number;
+  priority!: number
 
   @FilterableField({ nullable: true })
-  createdBy?: string;
+  createdBy?: string
 
   @FilterableField({ nullable: true })
-  updatedBy?: string;
+  updatedBy?: string
 
   @FilterableField()
-  ownerId!: number;
+  ownerId!: number
 }

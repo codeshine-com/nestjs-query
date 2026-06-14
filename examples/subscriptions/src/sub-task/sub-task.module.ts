@@ -1,10 +1,11 @@
-import { NestjsQueryGraphQLModule } from '@codeshine/nestjs-query-graphql';
-import { NestjsQueryTypeOrmModule } from '@codeshine/nestjs-query-typeorm';
-import { Module } from '@nestjs/common';
-import { SubTaskDTO } from './dto/sub-task.dto';
-import { CreateSubTaskDTO } from './dto/subtask-input.dto';
-import { SubTaskUpdateDTO } from './dto/subtask-update.dto';
-import { SubTaskEntity } from './sub-task.entity';
+import { Module } from '@nestjs/common'
+import { NestjsQueryGraphQLModule } from '@codeshine/nestjs-query-graphql'
+import { NestjsQueryTypeOrmModule } from '@codeshine/nestjs-query-typeorm'
+
+import { SubTaskDTO } from './dto/sub-task.dto'
+import { CreateSubTaskDTO } from './dto/subtask-input.dto'
+import { SubTaskUpdateDTO } from './dto/subtask-update.dto'
+import { SubTaskEntity } from './sub-task.entity'
 
 @Module({
   imports: [
@@ -16,10 +17,10 @@ import { SubTaskEntity } from './sub-task.entity';
           EntityClass: SubTaskEntity,
           CreateDTOClass: CreateSubTaskDTO,
           UpdateDTOClass: SubTaskUpdateDTO,
-          enableSubscriptions: true,
-        },
-      ],
-    }),
-  ],
+          enableSubscriptions: true
+        }
+      ]
+    })
+  ]
 })
 export class SubTaskModule {}

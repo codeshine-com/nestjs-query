@@ -1,0 +1,41 @@
+{
+  "name": "@codeshine/nestjs-query-typegoose",
+  "version": "9.4.0",
+  "description": "Typegoose adapter for @codeshine/nestjs-query-core",
+  "homepage": "https://github.com/tripss/nestjs-query#readme",
+  "bugs": {
+    "url": "https://github.com/tripss/nestjs-query/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tripss/nestjs-query.git",
+    "directory": "packages/query-typegoose"
+  },
+  "license": "MIT",
+  "author": "john mcinall<johnmcinall@gmail.com>",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
+  "directories": {
+    "lib": "src",
+    "test": "__tests__"
+  },
+  "files": [
+    "src/**"
+  ],
+  "dependencies": {
+    "camel-case": "^4.1.2",
+    "is-class": "0.0.9",
+    "lodash.escaperegexp": "^4.1.2",
+    "lodash.merge": "^4.6.2",
+    "tslib": "^2.8.1"
+  },
+  "peerDependencies": {
+    "@m8a/nestjs-typegoose": "^9.0.0 || ^10.0.0 || ^11.0.0",
+    "@nestjs/common": "^9.0.0 || ^10.0.0 || ^11.0.0",
+    "@typegoose/typegoose": "^9.0.0 || ^10.0.0 || ^11.0.0",
+    "mongoose": "^6.5.0 || ^7.0.3 || ^8.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,38 +1,29 @@
 {
-  "extends": "./tsconfig.build.json",
+  "compileOnSave": false,
   "compilerOptions": {
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": true,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "module": "esnext",
+    "target": "ES2021",
+    "typeRoots": ["node_modules/@types", "tools/@types"],
+    "lib": ["ES2021"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@codeshine/nestjs-query-core": ["packages/core/src"],
-      "@codeshine/nestjs-query-graphql": ["packages/query-graphql/src"],
-      "@codeshine/nestjs-query-typeorm": ["packages/query-typeorm/src"],
-      "@codeshine/nestjs-query-sequelize": ["packages/query-sequelize/src"],
-      "@codeshine/nestjs-query-mongoose": ["packages/query-mongoose/src"],
-      "@codeshine/nestjs-query-typegoose": ["packages/query-typegoose/src"]
+      "@codeshine/nestjs-query-core": ["packages/core/src/index.ts"],
+      "@codeshine/nestjs-query-graphql": ["packages/query-graphql/src/index.ts"],
+      "@codeshine/nestjs-query-mongoose": ["packages/query-mongoose/src/index.ts"],
+      "@codeshine/nestjs-query-sequelize": ["packages/query-sequelize/src/index.ts"],
+      "@codeshine/nestjs-query-typegoose": ["packages/query-typegoose/src/index.ts"],
+      "@codeshine/nestjs-query-typeorm": ["packages/query-typeorm/src/index.ts"]
     }
-  },
-  "references": [
-    {
-      "path": "./packages/core"
-    },
-    {
-      "path": "./packages/query-graphql"
-    },
-    {
-      "path": "./packages/query-typeorm"
-    },
-    {
-      "path": "./packages/query-sequelize"
-    },
-    {
-      "path": "./packages/query-mongoose"
-    },
-    {
-      "path": "./packages/query-typegoose"
-    },
-    {
-      "path": "./examples"
-    }
-  ],
-  "files": []
+  }
 }

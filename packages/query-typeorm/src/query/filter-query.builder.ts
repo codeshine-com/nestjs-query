@@ -1,31 +1,41 @@
-import { Filter, Paging, Query, SortField, getFilterFields, AggregateQuery } from '@codeshine/nestjs-query-core';
+import {
+  AggregateQuery,
+  AggregateQueryField,
+  Filter,
+  getFilterFields,
+  Paging,
+  Query,
+  SelectRelation,
+  SortField
+} from '@codeshine/nestjs-query-core'
+import merge from 'lodash.merge'
 import {
   DeleteQueryBuilder,
+  EntityMetadata,
   QueryBuilder,
   Repository,
   SelectQueryBuilder,
   UpdateQueryBuilder,
-  WhereExpression,
-  EntityMetadata,
-  ObjectLiteral,
-} from 'typeorm';
-import { SoftDeleteQueryBuilder } from 'typeorm/query-builder/SoftDeleteQueryBuilder';
-import { AggregateBuilder } from './aggregate.builder';
-import { WhereBuilder } from './where.builder';
-import merge from 'lodash.merge';
-import { RelationMetadata } from 'typeorm/metadata/RelationMetadata';
+  WhereExpressionBuilder
+} from 'typeorm'
+import { RelationMetadata } from 'typeorm/metadata/RelationMetadata'
+import { SoftDeleteQueryBuilder } from 'typeorm/query-builder/SoftDeleteQueryBuilder'
+
+import { AggregateBuilder } from './aggregate.builder'
+import { SQLComparisonBuilder } from './sql-comparison.builder'
+import { WhereBuilder } from './where.builder'
 
 /**
  * @internal
  *
  * Interface that for Typeorm query builders that are sortable.
  */
-interface Sortable<Entity extends ObjectLiteral> extends QueryBuilder<Entity> {
-  addOrderBy(sort: string, order?: 'ASC' | 'DESC', nulls?: 'NULLS FIRST' | 'NULLS LAST'): this;
+interface Sortable<Entity> extends QueryBuilder<Entity> {
+  addOrderBy(sort: string, order?: 'ASC' | 'DESC', nulls?: 'NULLS FIRST' | 'NULLS LAST'): this
 }
 
-interface Groupable<Entity extends ObjectLiteral> extends QueryBuilder<Entity> {
-  addGroupBy(groupBy: string): this;
+interface Groupable<Entity> extends QueryBuilder<Entity> {
+  addGroupBy(groupBy: string): this
 }
 
 /**
@@ -33,23 +43,52 @@ interface Groupable<Entity extends ObjectLiteral> extends QueryBuilder<Entity> {
  *
  * Interface for `typeorm` query builders that are pageable.
  */
-interface Pageable<Entity extends ObjectLiteral> extends QueryBuilder<Entity> {
-  limit(limit?: number): this;
-  offset(offset?: number): this;
-  skip(skip?: number): this;
-  take(take?: number): this;
+interface Pageable<Entity> extends QueryBuilder<Entity> {
+  limit(limit?: number): this
+
+  offset(offset?: number): this
+
+  skip(skip?: number): this
+
+  take(take?: number): this
 }
 
+/**
+ * @internal
+ *
+ * Partial relation metadata type
+ */
+export interface RelationRequiredMetadata {
+  relationType: RelationMetadata['relationType']
+  inverseRelationJoinColumnDatabaseName: string
+  inverseEntityMetadataTableName: string
+  joinTableName: string
+  junctionEntityMetadataOwnerColumnDatabaseName: string
+  junctionEntityMetadataInverseColumnDatabaseName: string
+}
 /**
  * @internal
  *
  * Nested record type
  */
 export interface NestedRecord<E = unknown> {
-  metadata?: RelationMetadata;
-  nested: {
-    [keys: string]: NestedRecord<E>;
-  };
+  [keys: string]: {
+    metadata?: RelationRequiredMetadata
+    nested: NestedRecord<E>
+  }
+}
+
+/**
+ * @internal
+ *
+ * Nested aliased type
+ */
+export interface NestedRelationsAliased {
+  [keys: string]: {
+    alias: string
+    metadata?: RelationRequiredMetadata
+    relations: NestedRelationsAliased
+  }
 }
 
 /**
@@ -57,59 +96,60 @@ export interface NestedRecord<E = unknown> {
  *
  * Class that will convert a Query into a `typeorm` Query Builder.
  */
-export class FilterQueryBuilder<Entity extends ObjectLiteral> {
+export class FilterQueryBuilder<Entity> {
+  private readonly virtualColumns: string[] = []
+
   constructor(
     readonly repo: Repository<Entity>,
-    readonly whereBuilder: WhereBuilder<Entity> = new WhereBuilder<Entity>(),
-    readonly aggregateBuilder: AggregateBuilder<Entity> = new AggregateBuilder<Entity>(),
-  ) {}
+    readonly whereBuilder: WhereBuilder<Entity> = new WhereBuilder<Entity>(
+      new SQLComparisonBuilder<Entity>(SQLComparisonBuilder.DEFAULT_COMPARISON_MAP, repo)
+    ),
+    readonly aggregateBuilder: AggregateBuilder<Entity> = new AggregateBuilder<Entity>(repo)
+  ) {
+    this.virtualColumns = repo.metadata.columns
+      .filter(({ isVirtualProperty }) => isVirtualProperty)
+      .map(({ propertyName }) => propertyName)
+  }
 
   /**
    * Create a `typeorm` SelectQueryBuilder with `WHERE`, `ORDER BY` and `LIMIT/OFFSET` clauses.
    *
    * @param query - the query to apply.
    */
-  select(query: Query<Entity>): SelectQueryBuilder<Entity> {
-    const hasRelations = this.filterHasRelations(query.filter);
-    let qb = this.createQueryBuilder();
-    qb = hasRelations
-      ? this.applyRelationJoinsRecursive(qb, this.getReferencedRelationsRecursive(this.repo.metadata, query.filter))
-      : qb;
-    qb = this.applyFilter(qb, query.filter, qb.alias);
-    qb = this.applySorting(qb, query.sorting, qb.alias);
-    qb = this.applyPaging(qb, query.paging, hasRelations);
-    return qb;
+  public select(query: Query<Entity>): SelectQueryBuilder<Entity> {
+    let qb = this.createQueryBuilder()
+
+    qb = this.applyRelationJoinsRecursive(
+      qb,
+      this.getReferencedRelationsWithAliasRecursive(this.repo.metadata, query.filter, query.relations),
+      query.relations
+    )
+
+    qb = this.applyFilter(qb, query.filter, qb.alias)
+    qb = this.applySorting(qb, query.sorting, qb.alias)
+    qb = this.applyPaging(qb, query.paging, this.shouldUseSkipTake(query.filter))
+
+    return qb
   }
 
-  selectById(id: string | number | (string | number)[], query: Query<Entity>): SelectQueryBuilder<Entity> {
-    const hasRelations = this.filterHasRelations(query.filter);
-    let qb = this.createQueryBuilder();
-    qb = hasRelations
-      ? this.applyRelationJoinsRecursive(qb, this.getReferencedRelationsRecursive(this.repo.metadata, query.filter))
-      : qb;
-    qb = qb.andWhereInIds(id);
-    qb = this.applyFilter(qb, query.filter, qb.alias);
-    qb = this.applySorting(qb, query.sorting, qb.alias);
-    qb = this.applyPaging(qb, query.paging, hasRelations);
-    return qb;
+  public selectById(id: string | number | (string | number)[], query: Query<Entity>): SelectQueryBuilder<Entity> {
+    return this.select(query).andWhereInIds(id)
   }
 
-  aggregate(query: Query<Entity>, aggregate: AggregateQuery<Entity>): SelectQueryBuilder<Entity> {
-    let qb = this.createQueryBuilder();
-    qb = this.applyAggregate(qb, aggregate, qb.alias);
-    qb = this.applyFilter(qb, query.filter, qb.alias);
-    qb = this.applyAggregateSorting(qb, aggregate.groupBy, qb.alias);
-    qb = this.applyGroupBy(qb, aggregate.groupBy, qb.alias);
-    return qb;
-  }
+  public aggregate(query: Query<Entity>, aggregate: AggregateQuery<Entity>): SelectQueryBuilder<Entity> {
+    const hasFilterRelations = this.filterHasRelations(query.filter)
+    let qb = this.createQueryBuilder()
 
-  /**
-   * Create a `typeorm` DeleteQueryBuilder with a WHERE clause.
-   *
-   * @param query - the query to apply.
-   */
-  delete(query: Query<Entity>): DeleteQueryBuilder<Entity> {
-    return this.applyFilter(this.repo.createQueryBuilder().delete(), query.filter);
+    qb = hasFilterRelations
+      ? this.applyRelationJoinsRecursive(qb, this.getReferencedRelationsWithAliasRecursive(this.repo.metadata, query.filter))
+      : qb
+
+    qb = this.applyAggregate(qb, aggregate, qb.alias)
+    qb = this.applyFilter(qb, query.filter, qb.alias)
+    qb = this.applyAggregateSorting(qb, aggregate.groupBy, qb.alias)
+    qb = this.applyAggregateGroupBy(qb, aggregate.groupBy, qb.alias)
+
+    return qb
   }
 
   /**
@@ -117,11 +157,17 @@ export class FilterQueryBuilder<Entity extends ObjectLiteral> {
    *
    * @param query - the query to apply.
    */
-  softDelete(query: Query<Entity>): SoftDeleteQueryBuilder<Entity> {
-    return this.applyFilter(
-      this.repo.createQueryBuilder().softDelete() as SoftDeleteQueryBuilder<Entity>,
-      query.filter,
-    );
+  public delete(query: Query<Entity>): DeleteQueryBuilder<Entity> {
+    return this.applyFilter(this.repo.createQueryBuilder().delete(), query.filter)
+  }
+
+  /**
+   * Create a `typeorm` DeleteQueryBuilder with a WHERE clause.
+   *
+   * @param query - the query to apply.
+   */
+  public softDelete(query: Query<Entity>): SoftDeleteQueryBuilder<Entity> {
+    return this.applyFilter(this.repo.createQueryBuilder().softDelete() as SoftDeleteQueryBuilder<Entity>, query.filter)
   }
 
   /**
@@ -129,9 +175,9 @@ export class FilterQueryBuilder<Entity extends ObjectLiteral> {
    *
    * @param query - the query to apply.
    */
-  update(query: Query<Entity>): UpdateQueryBuilder<Entity> {
-    const qb = this.applyFilter(this.repo.createQueryBuilder().update(), query.filter);
-    return this.applySorting(qb, query.sorting);
+  public update(query: Query<Entity>): UpdateQueryBuilder<Entity> {
+    const qb = this.applyFilter(this.repo.createQueryBuilder().update(), query.filter)
+    return this.applySorting(qb, query.sorting)
   }
 
   /**
@@ -140,16 +186,16 @@ export class FilterQueryBuilder<Entity extends ObjectLiteral> {
    * @param paging - the Paging options.
    * @param useSkipTake - if skip/take should be used instead of limit/offset.
    */
-  applyPaging<P extends Pageable<Entity>>(qb: P, paging?: Paging, useSkipTake?: boolean): P {
+  public applyPaging<P extends Pageable<Entity>>(qb: P, paging?: Paging, useSkipTake?: boolean): P {
     if (!paging) {
-      return qb;
+      return qb
     }
 
     if (useSkipTake) {
-      return qb.take(paging.limit).skip(paging.offset);
+      return qb.take(paging.limit).skip(paging.offset)
     }
 
-    return qb.limit(paging.limit).offset(paging.offset);
+    return qb.limit(paging.limit).offset(paging.offset)
   }
 
   /**
@@ -159,8 +205,8 @@ export class FilterQueryBuilder<Entity extends ObjectLiteral> {
    * @param aggregate - the aggregates to select.
    * @param alias - optional alias to use to qualify an identifier
    */
-  applyAggregate<Qb extends SelectQueryBuilder<Entity>>(qb: Qb, aggregate: AggregateQuery<Entity>, alias?: string): Qb {
-    return this.aggregateBuilder.build(qb, aggregate, alias);
+  public applyAggregate<Qb extends SelectQueryBuilder<Entity>>(qb: Qb, aggregate: AggregateQuery<Entity>, alias?: string): Qb {
+    return this.aggregateBuilder.build(qb, aggregate, alias)
   }
 
   /**
@@ -170,11 +216,12 @@ export class FilterQueryBuilder<Entity extends ObjectLiteral> {
    * @param filter - the filter.
    * @param alias - optional alias to use to qualify an identifier
    */
-  applyFilter<Where extends WhereExpression>(qb: Where, filter?: Filter<Entity>, alias?: string): Where {
+  public applyFilter<Where extends WhereExpressionBuilder>(qb: Where, filter?: Filter<Entity>, alias?: string): Where {
     if (!filter) {
-      return qb;
+      return qb
     }
-    return this.whereBuilder.build(qb, filter, this.getReferencedRelationsRecursive(this.repo.metadata, filter), alias);
+
+    return this.whereBuilder.build(qb, filter, this.getReferencedRelationsWithAliasRecursive(this.repo.metadata, filter), alias)
   }
 
   /**
@@ -183,34 +230,51 @@ export class FilterQueryBuilder<Entity extends ObjectLiteral> {
    * @param sorts - an array of SortFields to create the ORDER BY clause.
    * @param alias - optional alias to use to qualify an identifier
    */
-  applySorting<T extends Sortable<Entity>>(qb: T, sorts?: SortField<Entity>[], alias?: string): T {
+  public applySorting<T extends Sortable<Entity>>(qb: T, sorts?: SortField<Entity>[], alias?: string): T {
     if (!sorts) {
-      return qb;
+      return qb
     }
+
     return sorts.reduce((prevQb, { field, direction, nulls }) => {
-      const col = alias ? `${alias}.${field as string}` : `${field as string}`;
-      return prevQb.addOrderBy(col, direction, nulls);
-    }, qb);
+      const stringifiedField = String(field)
+      let col = alias ? `${alias}.${stringifiedField}` : `${stringifiedField}`
+
+      if (this.virtualColumns.includes(stringifiedField)) {
+        col = prevQb.escape(alias ? `${alias}_${stringifiedField}` : `${stringifiedField}`)
+      }
+
+      return prevQb.addOrderBy(col, direction, nulls)
+    }, qb)
   }
 
-  applyGroupBy<T extends Groupable<Entity>>(qb: T, groupBy?: (keyof Entity)[], alias?: string): T {
-    if (!groupBy) {
-      return qb;
+  public applyAggregateGroupBy<T extends Groupable<Entity>>(
+    qb: T,
+    aggregatedGroupBy?: AggregateQueryField<Entity>[],
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    alias?: string
+  ): T {
+    if (!aggregatedGroupBy) {
+      return qb
     }
-    return groupBy.reduce((prevQb, group) => {
-      const col = alias ? `${alias}.${group as string}` : `${group as string}`;
-      return prevQb.addGroupBy(col);
-    }, qb);
+
+    return aggregatedGroupBy.reduce((prevQb, aggregatedField) => {
+      return prevQb.addGroupBy(prevQb.escape(AggregateBuilder.getGroupByAlias(aggregatedField.field)))
+    }, qb)
   }
 
-  applyAggregateSorting<T extends Sortable<Entity>>(qb: T, groupBy?: (keyof Entity)[], alias?: string): T {
-    if (!groupBy) {
-      return qb;
+  public applyAggregateSorting<T extends Sortable<Entity>>(
+    qb: T,
+    aggregatedGroupBy?: AggregateQueryField<Entity>[],
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    alias?: string
+  ): T {
+    if (!aggregatedGroupBy) {
+      return qb
     }
-    return groupBy.reduce((prevQb, field) => {
-      const col = alias ? `${alias}.${field as string}` : `${field as string}`;
-      return prevQb.addOrderBy(col, 'ASC');
-    }, qb);
+
+    return aggregatedGroupBy.reduce((prevQb, aggregatedField) => {
+      return prevQb.addOrderBy(prevQb.escape(AggregateBuilder.getGroupByAlias(aggregatedField.field)), 'ASC')
+    }, qb)
   }
 
   /**
@@ -218,92 +282,189 @@ export class FilterQueryBuilder<Entity extends ObjectLiteral> {
    * QueryBuilders.
    */
   private createQueryBuilder(): SelectQueryBuilder<Entity> {
-    return this.repo.createQueryBuilder();
+    return this.repo.createQueryBuilder()
   }
 
   /**
    * Gets relations referenced in the filter and adds joins for them to the query builder
    * @param qb - the `typeorm` QueryBuilder.
    * @param relationsMap - the relations map.
+   * @param selectRelations - additional relations to select
+   * @param alias - alias to use
    *
    * @returns the query builder for chaining
    */
-  applyRelationJoinsRecursive(
+  public applyRelationJoinsRecursive(
     qb: SelectQueryBuilder<Entity>,
-    relationsMap?: NestedRecord,
-    alias?: string,
+    relationsMap?: NestedRelationsAliased,
+    selectRelations?: SelectRelation<Entity>[],
+    alias?: string
   ): SelectQueryBuilder<Entity> {
     if (!relationsMap) {
-      return qb;
+      return qb
     }
-    const referencedRelations = Object.keys(relationsMap.nested);
-    return referencedRelations.reduce((rqb, relation) => {
+
+    const referencedRelations = Object.entries(relationsMap)
+
+    // TODO:: If relation is not nullable use inner join?
+    return referencedRelations.reduce((rqb, [relationKey, relation]) => {
+      const relationAlias = relation.alias
+      const relationChildren = relation.relations
+
+      const selectRelation = selectRelations && selectRelations.find(({ name }) => name === relationKey)
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
+      if (selectRelation) {
+        rqb = rqb.leftJoinAndSelect(`${alias ?? rqb.alias}.${relationKey}`, relationAlias)
+        // Apply filter for the current relation
+        rqb = this.applyFilter(rqb, selectRelation.query.filter, relationAlias)
+        return this.applyRelationJoinsRecursive(rqb, relationChildren, selectRelation.query.relations, relationAlias)
+      }
+
       return this.applyRelationJoinsRecursive(
-        rqb.leftJoin(`${alias ?? rqb.alias}.${relation}`, relation),
-        relationsMap.nested[relation],
-        relation,
-      );
-    }, qb);
+        rqb.leftJoin(`${alias ?? rqb.alias}.${relationKey}`, relationAlias),
+        relationChildren,
+        [],
+        relationAlias
+      )
+    }, qb)
   }
 
   /**
    * Checks if a filter references any relations.
-   * @param filter
-   * @private
    *
    * @returns true if there are any referenced relations
    */
-  filterHasRelations(filter?: Filter<Entity>): boolean {
+  public filterHasRelations(filter?: Filter<Entity>): boolean {
     if (!filter) {
-      return false;
+      return false
     }
-    return this.getReferencedRelations(filter).length > 0;
+
+    const { relationNames } = this
+    return getFilterFields(filter).filter((f) => relationNames.includes(f)).length > 0
   }
 
-  private getReferencedRelations(filter: Filter<Entity>): string[] {
-    const { relationNames } = this;
-    const referencedFields = getFilterFields(filter);
-    return referencedFields.filter((f) => relationNames.includes(f));
+  /**
+   * Checks if the query should use skip/take instead of limit/offset.
+   *
+   * We need to use Skip/Take instead of Limit/Offset when the query involves a join that might be (one|many)-to-many.
+   * This method looks for any n-to-many relations in the filter and if it finds any, it returns true.
+   *
+   * Recursively traverses the filter so we can detect nested n-to-many relations.
+   */
+  private shouldUseSkipTake<T>(filter?: Filter<T>, relations: RelationMetadata[] = this.repo.metadata.relations): boolean {
+    if (!filter) return false
+
+    return getFilterFields(filter).some((field) => {
+      const relation = relations.find(({ propertyName }) => propertyName === field)
+      if (!relation) return false
+      if (!relation.isOneToOne && !relation.isManyToOne) return true
+
+      const nestedFilter = filter[field] as Filter<unknown>
+
+      return this.shouldUseSkipTake(nestedFilter, relation.inverseEntityMetadata.relations)
+    })
   }
 
-  getReferencedRelationsRecursive(
+  public getReferencedRelationsWithAliasRecursive(
     metadata: EntityMetadata,
     filter: Filter<unknown> = {},
-    relationMetadata?: RelationMetadata,
+    selectRelations: SelectRelation<Entity>[] = []
+  ): NestedRelationsAliased {
+    const referencedRelations = this.getReferencedRelationsRecursive(metadata, filter, selectRelations)
+    return this.injectRelationsAliasRecursive(referencedRelations)
+  }
+
+  private injectRelationsAliasRecursive(relations: NestedRecord, counter = new Map<string, number>()): NestedRelationsAliased {
+    return Object.entries(relations).reduce((prev, [name, children]) => {
+      const count = (counter.get(name) ?? -1) + 1
+      const alias = count === 0 ? name : `${name}_${count}`
+      counter.set(name, count)
+
+      return {
+        ...prev,
+        [name]: {
+          alias,
+          metadata: children?.metadata,
+          relations: this.injectRelationsAliasRecursive(children?.nested ?? {}, counter)
+        }
+      }
+    }, {})
+  }
+
+  public getReferencedRelationsRecursive(
+    metadata: EntityMetadata,
+    filter: Filter<unknown>,
+    selectRelations: SelectRelation<Entity>[] = []
   ): NestedRecord {
-    const referencedFields = Array.from(new Set(Object.keys(filter) as (keyof Filter<unknown>)[]));
-    return referencedFields.reduce(
-      (prev, curr) => {
-        const currFilterValue = filter[curr];
+    const referencedFields = Array.from(new Set(Object.keys(filter) as (keyof Filter<unknown>)[]))
 
-        if ((curr === 'and' || curr === 'or') && Array.isArray(currFilterValue)) {
-          for (const subFilter of currFilterValue) {
-            prev.nested = merge(prev.nested, this.getReferencedRelationsRecursive(metadata, subFilter).nested);
-          }
-        } else if ((curr === 'exists' || curr === 'notExists') && !Array.isArray(currFilterValue)) {
-          prev.nested = merge(prev.nested, this.getReferencedRelationsRecursive(metadata, currFilterValue).nested);
-        } else {
-          const referencedRelation = metadata.relations.find((r) => r.propertyName === curr);
+    const referencedRelations = selectRelations.reduce((relations, selectRelation) => {
+      const referencedRelation = metadata.relations.find((r) => r.propertyName === selectRelation.name)
 
-          if (!referencedRelation) return prev;
+      if (!referencedRelation) {
+        return relations
+      }
 
-          prev.nested[curr] = merge(
-            prev.nested[curr] || { metadata: referencedRelation },
-            this.getReferencedRelationsRecursive(
-              referencedRelation.inverseEntityMetadata,
-              currFilterValue,
-              referencedRelation,
-            ),
-          );
+      const nested = selectRelation.query.relations
+        ? this.getReferencedRelationsRecursive(referencedRelation.inverseEntityMetadata, {}, selectRelation.query.relations)
+        : {}
+
+      relations[selectRelation.name] = {
+        metadata: this.composeRelationRequiredMetadata(referencedRelation),
+        nested
+      }
+
+      return relations
+    }, {})
+
+    return referencedFields.reduce((prev, curr) => {
+      const currFilterValue = filter[curr]
+
+      if ((curr === 'and' || curr === 'or') && Array.isArray(currFilterValue)) {
+        for (const subFilter of currFilterValue) {
+          prev = merge(prev, this.getReferencedRelationsRecursive(metadata, subFilter, []))
         }
 
-        return prev;
-      },
-      { metadata: relationMetadata, nested: {} } as NestedRecord,
-    );
+        return prev
+      }
+
+      if ((curr === 'exists' || curr === 'notExists') && !Array.isArray(currFilterValue)) {
+        prev = merge(prev, this.getReferencedRelationsRecursive(metadata, currFilterValue, []))
+
+        return prev
+      }
+
+      const referencedRelation = metadata.relations.find((r) => r.propertyName === curr)
+
+      if (!referencedRelation) {
+        return prev
+      }
+
+      const nested = this.getReferencedRelationsRecursive(referencedRelation.inverseEntityMetadata, currFilterValue, [])
+
+      return {
+        ...prev,
+        [curr]: {
+          metadata: this.composeRelationRequiredMetadata(referencedRelation),
+          nested: merge(prev[curr]?.nested, nested)
+        }
+      }
+    }, referencedRelations as NestedRecord)
   }
 
   private get relationNames(): string[] {
-    return this.repo.metadata.relations.map((r) => r.propertyName);
+    return this.repo.metadata.relations.map((r) => r.propertyName)
+  }
+
+  private composeRelationRequiredMetadata(relation: RelationMetadata): RelationRequiredMetadata {
+    return {
+      relationType: relation.relationType,
+      inverseRelationJoinColumnDatabaseName: relation?.inverseRelation?.joinColumns?.[0]?.databaseName,
+      inverseEntityMetadataTableName: relation.inverseEntityMetadata?.tableName,
+      joinTableName: relation.joinTableName,
+      junctionEntityMetadataOwnerColumnDatabaseName: relation.junctionEntityMetadata?.ownerColumns?.[0]?.databaseName,
+      junctionEntityMetadataInverseColumnDatabaseName: relation.junctionEntityMetadata?.inverseColumns?.[0]?.databaseName
+    }
   }
 }

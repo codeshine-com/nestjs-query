@@ -2,16 +2,15 @@
 title: Soft Delete
 ---
 
-`TypeOrm` supports [soft deletes](https://typeorm.io/#/delete-query-builder/soft-delete). This feature does not delete records but instead updates the column decorated with `@DeletedDateColumn`.
+`TypeOrm` supports [soft deletes](https://typeorm.io/#/delete-query-builder/soft-delete). This feature does not delete records but instead updates the column decorated with `@DeleteDateColumn`. 
 
 Before continuing it is recommended that you read the following.
-
-- https://typeorm.io/#/decorator-reference/deletedatecolumn
-- https://typeorm.io/#/delete-query-builder/soft-delete
-
+* https://typeorm.io/#/decorator-reference/deletedatecolumn
+* https://typeorm.io/#/delete-query-builder/soft-delete
+  
 ## Setting up your entity.
 
-Before enabling soft deletes you must add the DeletedDateColumn to your entity.
+Before enabling soft deletes you must add the DeleteDateColumn to your entity.
 
 ```ts title="todo-item.entity.ts"
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn, DeleteDateColumn } from 'typeorm';
@@ -98,8 +97,8 @@ export class TodoItemResolver extends CRUDResolver(TodoItemDTO) {
     return this.service.restoreMany(filter);
   }
 }
-```
+``` 
 
 ## Complete Example
 
-To see a complete example [see here.](https://github.com/doug-martin/nestjs-query/tree/master/examples/typeorm-soft-delete)
+To see a complete example [see here.](https://github.com/tripss/nestjs-query/tree/master/examples/typeorm-soft-delete)

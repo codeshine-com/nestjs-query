@@ -1,93 +1,106 @@
-import { Class } from '@codeshine/nestjs-query-core';
-import { Complexity } from '@nestjs/graphql';
-import { DTONamesOpts } from '../../common';
-import { ResolverMethodOpts } from '../../decorators';
-import { QueryArgsTypeOpts, ConnectionOptions } from '../../types';
+import { Complexity, FieldOptions } from '@nestjs/graphql'
+import { Class } from '@codeshine/nestjs-query-core'
 
-import { AuthorizerOptions } from '../../auth';
+import { AuthorizerOptions } from '../../auth'
+import { DTONamesOpts } from '../../common'
+import { ResolverMethodOpts } from '../../decorators'
+import { ResolverRelationMethodOpts } from '../../decorators/resolver-method.decorator'
+import { ConnectionOptions, QueryArgsTypeOpts } from '../../types'
 
 export type ReferencesKeys<DTO, Reference> = {
-  [F in keyof Reference]?: keyof DTO;
-};
+  [F in keyof Reference]?: keyof DTO
+}
 
 export interface ResolverRelationReference<DTO, Reference> extends DTONamesOpts, ResolverMethodOpts {
   /**
    * The class type of the relation.
    */
-  DTO: Class<Reference>;
+  DTO: Class<Reference>
 
   /**
    * Keys
    */
-  keys: ReferencesKeys<DTO, Reference>;
+  keys: ReferencesKeys<DTO, Reference>
 
   /**
    * Set to true if the relation is nullable
    */
-  nullable?: boolean;
+  nullable?: boolean
 
-  complexity?: Complexity;
+  complexity?: Complexity
 }
 
 export type ResolverRelation<Relation> = {
   /**
    * The class type of the relation.
    */
-  DTO: Class<Relation>;
+  DTO: Class<Relation>
 
   /**
    * The name of the relation to use when fetching from the QueryService
    */
-  relationName?: string;
+  relationName?: string
   /**
    * Set to true if the relation is nullable
    */
-  nullable?: boolean;
+  nullable?: boolean
   /**
    * Disable read relation graphql endpoints
    */
-  disableRead?: boolean;
+  disableRead?: boolean
   /**
-   * Disable update relation graphql endpoints
+   * Enable look ahead mode, will join and select the relation when queried.
    */
-  disableUpdate?: boolean;
+  enableLookAhead?: boolean
   /**
-   * Disable remove relation graphql endpoints
+   * Indicates if soft-deleted rows should be included in relation result.
    */
-  disableRemove?: boolean;
-
-  /**
-   * Enable aggregation queries.
-   */
-  enableAggregate?: boolean;
-
+  withDeleted?: boolean
   /**
    * Set to true if you should be able to filter on this relation.
    *
    * This will only work with relations defined through an ORM (typeorm or sequelize).
    */
-  allowFiltering?: boolean;
+  allowFiltering?: boolean
 
-  complexity?: Complexity;
+  /**
+   * Description of the relation.
+   */
+  description?: string
 
-  auth?: AuthorizerOptions<Relation>;
+  update?: Pick<ResolverRelation<Relation>, 'description'> & ResolverRelationMethodOpts
+  remove?: Pick<ResolverRelation<Relation>, 'description'> & ResolverRelationMethodOpts
+  /**
+   * Enable aggregation queries.
+   */
+  enableAggregate?: boolean
+  aggregate?: Pick<ResolverRelation<Relation>, 'description'> & ResolverRelationMethodOpts
+
+  auth?: AuthorizerOptions<Relation>
 } & DTONamesOpts &
   ResolverMethodOpts &
   QueryArgsTypeOpts<Relation> &
-  Pick<ConnectionOptions, 'enableTotalCount'>;
+  Pick<ConnectionOptions, 'enableTotalCount'> &
+  Omit<FieldOptions, 'name' | 'description' | 'middleware'>
 
-export type RelationTypeMap<RT> = Record<string, RT>;
+export type RelationTypeMap<RT> = Record<string, RT>
 
-export type RelationsOpts = {
+export type ResolverOneRelation<Relation> = Omit<
+  ResolverRelation<Relation>,
+  'disableFilter' | 'disableSort' | 'enableAggregate' | 'aggregate'
+>
+export type ResolverManyRelation<Relation> = Omit<ResolverRelation<Relation>, 'enableLookAhead'>
+
+export type RelationsOpts<Relation = unknown> = {
   /**
    * All relations that are a single record
    */
-  one?: RelationTypeMap<ResolverRelation<unknown>>;
+  one?: RelationTypeMap<ResolverOneRelation<Relation>>
   /**
    * All relations that have multiple records
    */
-  many?: RelationTypeMap<ResolverRelation<unknown>>;
-};
+  many?: RelationTypeMap<ResolverManyRelation<Relation>>
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type ReferencesOpts<DTO> = RelationTypeMap<ResolverRelationReference<DTO, any>>;
+export type ReferencesOpts<DTO> = RelationTypeMap<ResolverRelationReference<DTO, any>>

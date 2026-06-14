@@ -1,42 +1,54 @@
-import { FilterableField, KeySet, CursorConnection, QueryOptions } from '@codeshine/nestjs-query-graphql';
-import { ObjectType, ID, GraphQLISODateTime, Field } from '@nestjs/graphql';
-import { AuthGuard } from '../../auth.guard';
-import { SubTaskDTO } from '../../sub-task/dto/sub-task.dto';
-import { TagDTO } from '../../tag/dto/tag.dto';
+import { Field, GraphQLISODateTime, ID, ObjectType } from '@nestjs/graphql'
+import { CursorConnection, FilterableField, KeySet, ObjectId, QueryOptions } from '@codeshine/nestjs-query-graphql'
+import mongoose from 'mongoose'
+
+import { AuthGuard } from '../../auth.guard'
+import { SubTaskDTO } from '../../sub-task/dto/sub-task.dto'
+import { TagDTO } from '../../tag/dto/tag.dto'
 
 @ObjectType('TodoItem')
 @KeySet(['id'])
 @QueryOptions({ enableTotalCount: true })
-@CursorConnection('subTasks', () => SubTaskDTO, { disableRemove: true, guards: [AuthGuard] })
-@CursorConnection('tags', () => TagDTO, { guards: [AuthGuard] })
+@CursorConnection('subTasks', () => SubTaskDTO, {
+  update: { enabled: true },
+  guards: [AuthGuard]
+})
+@CursorConnection('tags', () => TagDTO, {
+  update: { enabled: true },
+  remove: { enabled: true },
+  guards: [AuthGuard]
+})
 export class TodoItemDTO {
+  @ObjectId()
+  _id: mongoose.Types.ObjectId
+
   @FilterableField(() => ID)
-  id!: string;
+  id!: string
 
   @FilterableField()
-  title!: string;
+  title!: string
 
   @FilterableField({ nullable: true })
-  description?: string;
+  description?: string
 
   @FilterableField()
-  completed!: boolean;
+  completed!: boolean
 
   @FilterableField(() => GraphQLISODateTime)
-  createdAt!: Date;
+  createdAt!: Date
 
   @FilterableField(() => GraphQLISODateTime)
-  updatedAt!: Date;
+  updatedAt!: Date
 
   @Field()
-  age!: number;
+  age!: number
 
   @FilterableField()
-  priority!: number;
+  priority!: number
 
   @FilterableField({ nullable: true })
-  createdBy?: string;
+  createdBy?: string
 
   @FilterableField({ nullable: true })
-  updatedBy?: string;
+  updatedBy?: string
 }

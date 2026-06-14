@@ -1,36 +1,45 @@
-import { FilterableField, FilterableCursorConnection, KeySet, QueryOptions } from '@codeshine/nestjs-query-graphql';
-import { ObjectType, ID, GraphQLISODateTime, Field } from '@nestjs/graphql';
-import { AuthGuard } from '../../auth.guard';
-import { SubTaskDTO } from '../../sub-task/dto/sub-task.dto';
-import { TagDTO } from '../../tag/dto/tag.dto';
+import { Field, GraphQLISODateTime, ID, ObjectType } from '@nestjs/graphql'
+import { FilterableCursorConnection, FilterableField, KeySet, QueryOptions } from '@codeshine/nestjs-query-graphql'
+
+import { AuthGuard } from '../../auth.guard'
+import { SubTaskDTO } from '../../sub-task/dto/sub-task.dto'
+import { TagDTO } from '../../tag/dto/tag.dto'
 
 @ObjectType('TodoItem')
 @KeySet(['id'])
 @QueryOptions({ enableTotalCount: true })
-@FilterableCursorConnection('subTasks', () => SubTaskDTO, { guards: [AuthGuard] })
-@FilterableCursorConnection('tags', () => TagDTO, { guards: [AuthGuard] })
+@FilterableCursorConnection('subTasks', () => SubTaskDTO, {
+  update: { enabled: true },
+  remove: { enabled: true },
+  guards: [AuthGuard]
+})
+@FilterableCursorConnection('tags', () => TagDTO, {
+  update: { enabled: true },
+  remove: { enabled: true },
+  guards: [AuthGuard]
+})
 export class TodoItemDTO {
   @FilterableField(() => ID)
-  id!: number;
+  id!: number
 
   @FilterableField()
-  title!: string;
+  title!: string
 
   @FilterableField({ nullable: true })
-  description?: string;
+  description?: string
 
   @FilterableField()
-  completed!: boolean;
+  completed!: boolean
 
   @FilterableField(() => GraphQLISODateTime)
-  created!: Date;
+  created!: Date
 
   @FilterableField(() => GraphQLISODateTime)
-  updated!: Date;
+  updated!: Date
 
   @Field()
-  age!: number;
+  age!: number
 
   @FilterableField()
-  priority!: number;
+  priority!: number
 }

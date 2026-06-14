@@ -8,11 +8,12 @@ This package is built using [mongoose](https://mongoosejs.com/) and [@nestjs/mon
 
 ## Installation
 
-[Installation Docs](../../introduction/install.md#nestjs-queryquery-mongoose)
+[Installation Docs](../../introduction/install.md#codeshinenestjs-query-mongoose)
 
 ## Docs
 
-- Read the [QueryService docs](../services.mdx)
-- [Relations](./relations.mdx) - How to work with relations/references in `mongoose` with `nestjs-query`
-- [Custom Service](./custom-service.md) - Example custom service
-- [Serialization](./serialization.md) - How to serialize `sequelize` models.
+* Read the [QueryService docs](../services.mdx)
+* [Relations](./relations.mdx) - How to work with relations/references in `mongoose` with `nestjs-query`
+* [Custom Service](./custom-service.md) - Example custom service
+* [Serialization](./serialization.md) - How to serialize `sequelize` models. 
+

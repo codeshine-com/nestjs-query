@@ -1,11 +1,12 @@
-import { NestjsQueryGraphQLModule } from '@codeshine/nestjs-query-graphql';
-import { NestjsQueryTypeOrmModule } from '@codeshine/nestjs-query-typeorm';
-import { Module } from '@nestjs/common';
-import { TodoItemInputDTO } from './dto/todo-item-input.dto';
-import { TodoItemUpdateDTO } from './dto/todo-item-update.dto';
-import { TodoItemDTO } from './dto/todo-item.dto';
-import { TodoItemEntity } from './todo-item.entity';
-import { TodoItemService } from './todo-item.service';
+import { Module } from '@nestjs/common'
+import { NestjsQueryGraphQLModule } from '@codeshine/nestjs-query-graphql'
+import { NestjsQueryTypeOrmModule } from '@codeshine/nestjs-query-typeorm'
+
+import { TodoItemDTO } from './dto/todo-item.dto'
+import { TodoItemInputDTO } from './dto/todo-item-input.dto'
+import { TodoItemUpdateDTO } from './dto/todo-item-update.dto'
+import { TodoItemEntity } from './todo-item.entity'
+import { TodoItemService } from './todo-item.service'
 
 @Module({
   imports: [
@@ -18,10 +19,10 @@ import { TodoItemService } from './todo-item.service';
           EntityClass: TodoItemEntity,
           ServiceClass: TodoItemService,
           CreateDTOClass: TodoItemInputDTO,
-          UpdateDTOClass: TodoItemUpdateDTO,
-        },
-      ],
-    }),
-  ],
+          UpdateDTOClass: TodoItemUpdateDTO
+        }
+      ]
+    })
+  ]
 })
 export class TodoItemModule {}

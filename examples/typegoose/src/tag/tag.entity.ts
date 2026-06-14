@@ -1,39 +1,43 @@
-import { Base } from '@typegoose/typegoose/lib/defaultClasses';
-import { Prop, modelOptions, Ref } from '@typegoose/typegoose';
-import { Types } from 'mongoose';
-import { TodoItemEntity } from '../todo-item/todo-item.entity';
+import { ObjectId } from '@codeshine/nestjs-query-graphql'
+import { modelOptions, Prop, Ref } from '@typegoose/typegoose'
+import { Base } from '@typegoose/typegoose/lib/defaultClasses'
+import { Types } from 'mongoose'
+
+import { TodoItemEntity } from '../todo-item/todo-item.entity'
 
 @modelOptions({
   schemaOptions: {
     timestamps: true,
     collection: 'tags',
-    toObject: { virtuals: true },
-  },
+    toObject: { virtuals: true }
+  }
 })
 export class TagEntity implements Base {
-  _id!: Types.ObjectId;
+  @ObjectId()
+  _id!: Types.ObjectId
 
-  id!: string;
+  id!: string
 
   @Prop({ required: true })
-  name!: string;
+  name!: string
 
   @Prop()
-  createdAt!: Date;
+  createdAt!: Date
 
   @Prop()
-  updatedAt!: Date;
+  updatedAt!: Date
 
   @Prop()
-  createdBy?: string;
+  createdBy?: string
 
   @Prop()
-  updatedBy?: string;
+  updatedBy?: string
 
+  @ObjectId()
   @Prop({
     ref: 'TodoItemEntity',
     localField: '_id',
-    foreignField: 'tags',
+    foreignField: 'tags'
   })
-  todoItems?: Ref<TodoItemEntity>[];
+  todoItems?: Ref<TodoItemEntity>[]
 }

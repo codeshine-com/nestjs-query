@@ -1,10 +1,11 @@
-import { NestjsQueryGraphQLModule } from '@codeshine/nestjs-query-graphql';
-import { NestjsQueryTypeOrmModule } from '@codeshine/nestjs-query-typeorm';
-import { Module } from '@nestjs/common';
-import { TagInputDTO } from './dto/tag-input.dto';
-import { TagDTO } from './dto/tag.dto';
-import { TagEntity } from './tag.entity';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Module } from '@nestjs/common'
+import { NestjsQueryGraphQLModule } from '@codeshine/nestjs-query-graphql'
+import { NestjsQueryTypeOrmModule } from '@codeshine/nestjs-query-typeorm'
+
+import { JwtAuthGuard } from '../auth/jwt-auth.guard'
+import { TagDTO } from './dto/tag.dto'
+import { TagInputDTO } from './dto/tag-input.dto'
+import { TagEntity } from './tag.entity'
 
 @Module({
   imports: [
@@ -18,10 +19,10 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
           UpdateDTOClass: TagInputDTO,
           enableAggregate: true,
           enableSubscriptions: true,
-          guards: [JwtAuthGuard],
-        },
-      ],
-    }),
-  ],
+          guards: [JwtAuthGuard]
+        }
+      ]
+    })
+  ]
 })
 export class TagModule {}

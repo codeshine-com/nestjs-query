@@ -1,29 +1,34 @@
+import { MethodNotAllowedException, NotFoundException } from '@nestjs/common'
 import {
-  Query,
-  DeleteManyResponse,
-  UpdateManyResponse,
-  DeepPartial,
-  Class,
-  QueryService,
-  Filter,
+  AggregateOptions,
   AggregateQuery,
   AggregateResponse,
+  Class,
+  CountOptions,
+  DeepPartial,
+  DeleteManyOptions,
+  DeleteManyResponse,
+  DeleteOneOptions,
+  Filter,
+  Filterable,
   FindByIdOptions,
   GetByIdOptions,
-  UpdateOneOptions,
-  DeleteOneOptions,
-  Filterable,
-} from '@codeshine/nestjs-query-core';
-import { Repository, DeleteResult, ObjectLiteral } from 'typeorm';
-import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { DeepPartial as TypeOrmDeepPartial } from 'typeorm/common/DeepPartial';
-import { MethodNotAllowedException, NotFoundException } from '@nestjs/common';
-import { FilterQueryBuilder, AggregateBuilder } from '../query';
-import { RelationQueryService } from './relation-query.service';
+  Query,
+  QueryOptions,
+  QueryService,
+  UpdateManyResponse,
+  UpdateOneOptions
+} from '@codeshine/nestjs-query-core'
+import { DeleteResult, FindOptionsWhere, Repository } from 'typeorm'
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity'
+import { UpdateResult } from 'typeorm/query-builder/result/UpdateResult'
 
-export interface TypeOrmQueryServiceOpts<Entity extends ObjectLiteral> {
-  useSoftDelete?: boolean;
-  filterQueryBuilder?: FilterQueryBuilder<Entity>;
+import { AggregateBuilder, FilterQueryBuilder } from '../query'
+import { RelationQueryService } from './relation-query.service'
+
+export interface TypeOrmQueryServiceOpts<Entity> {
+  useSoftDelete?: boolean
+  filterQueryBuilder?: FilterQueryBuilder<Entity>
 }
 
 /**
@@ -42,23 +47,27 @@ export interface TypeOrmQueryServiceOpts<Entity extends ObjectLiteral> {
  * }
  * ```
  */
-export class TypeOrmQueryService<Entity extends ObjectLiteral>
+export class TypeOrmQueryService<Entity>
   extends RelationQueryService<Entity>
   implements QueryService<Entity, DeepPartial<Entity>, DeepPartial<Entity>>
 {
-  readonly filterQueryBuilder: FilterQueryBuilder<Entity>;
+  readonly filterQueryBuilder: FilterQueryBuilder<Entity>
 
-  readonly useSoftDelete: boolean;
+  readonly useSoftDelete: boolean
 
-  constructor(readonly repo: Repository<Entity>, opts?: TypeOrmQueryServiceOpts<Entity>) {
-    super();
-    this.filterQueryBuilder = opts?.filterQueryBuilder ?? new FilterQueryBuilder<Entity>(this.repo);
-    this.useSoftDelete = opts?.useSoftDelete ?? false;
+  constructor(
+    readonly repo: Repository<Entity>,
+    opts?: TypeOrmQueryServiceOpts<Entity>
+  ) {
+    super()
+
+    this.filterQueryBuilder = opts?.filterQueryBuilder ?? new FilterQueryBuilder<Entity>(this.repo)
+    this.useSoftDelete = opts?.useSoftDelete ?? false
   }
 
   // eslint-disable-next-line @typescript-eslint/naming-convention
-  get EntityClass(): Class<Entity> {
-    return this.repo.target as Class<Entity>;
+  public get EntityClass(): Class<Entity> {
+    return this.repo.target as Class<Entity>
   }
 
   /**
@@ -74,18 +83,58 @@ export class TypeOrmQueryService<Entity extends ObjectLiteral>
    * ```
    * @param query - The Query used to filter, page, and sort rows.
    */
-  async query(query: Query<Entity>): Promise<Entity[]> {
-    return this.filterQueryBuilder.select(query).getMany();
+  public async query(query: Query<Entity>, opts?: QueryOptions<Entity>): Promise<Entity[]> {
+    const qb = this.filterQueryBuilder.select(query)
+
+    if (opts?.withDeleted) {
+      qb.withDeleted()
+    }
+
+    return qb.getMany()
   }
 
-  async aggregate(filter: Filter<Entity>, aggregate: AggregateQuery<Entity>): Promise<AggregateResponse<Entity>[]> {
-    return AggregateBuilder.asyncConvertToAggregateResponse(
-      this.filterQueryBuilder.aggregate({ filter }, aggregate).getRawMany<Record<string, unknown>>(),
-    );
+  public async aggregate(
+    filter: Filter<Entity>,
+    aggregate: AggregateQuery<Entity>,
+    opts?: AggregateOptions
+  ): Promise<AggregateResponse<Entity>[]> {
+    const qb = this.filterQueryBuilder.aggregate({ filter }, aggregate)
+
+    if (opts?.withDeleted) {
+      qb.withDeleted()
+    }
+
+    const resultPromise = qb.getRawMany<Record<string, unknown>>()
+    return AggregateBuilder.asyncConvertToAggregateResponse(resultPromise)
   }
 
-  async count(filter: Filter<Entity>): Promise<number> {
-    return this.filterQueryBuilder.select({ filter }).getCount();
+  public async count(filter: Filter<Entity>, opts?: CountOptions): Promise<number> {
+    const qb = this.filterQueryBuilder.select({ filter })
+
+    if (opts?.withDeleted) {
+      qb.withDeleted()
+    }
+
+    // Check if we have any relation that could cause the same record to be returned twice, if not then we create
+    // our own count as TypeORM still decides to add "DISTINCT" to it, which makes it slow
+    if (qb.expressionMap.joinAttributes.some((join) => join.isMany)) {
+      // If we have relations than do what TypeORM does
+      return qb.getCount()
+    }
+
+    // This is the same as TypeORM does it with the exception that the select is always COUNT(1)
+    const result = (await qb
+      .orderBy()
+      .groupBy()
+      .offset(undefined)
+      .limit(undefined)
+      .skip(undefined)
+      .take(undefined)
+      .select('COUNT(1)', 'cnt')
+      .setOption('disable-global-order')
+      .execute()) as { cnt?: number }[]
+
+    return parseInt(`${result?.[0]?.cnt ?? 0}`)
   }
 
   /**
@@ -96,9 +145,17 @@ export class TypeOrmQueryService<Entity extends ObjectLiteral>
    * const todoItem = await this.service.findById(1);
    * ```
    * @param id - The id of the record to find.
+   * @param opts
    */
-  async findById(id: string | number, opts?: FindByIdOptions<Entity>): Promise<Entity | undefined> {
-    return (await this.filterQueryBuilder.selectById(id, opts ?? {}).getOne()) ?? undefined;
+  public async findById(id: string | number, opts?: FindByIdOptions<Entity>): Promise<Entity | undefined> {
+    const qb = this.filterQueryBuilder.selectById(id, opts ?? {})
+
+    if (opts?.withDeleted) {
+      qb.withDeleted()
+    }
+
+    const result = await qb.getOne()
+    return result === null ? undefined : result
   }
 
   /**
@@ -113,13 +170,16 @@ export class TypeOrmQueryService<Entity extends ObjectLiteral>
    * }
    * ```
    * @param id - The id of the record to find.
+   * @param opts
    */
-  async getById(id: string | number, opts?: GetByIdOptions<Entity>): Promise<Entity> {
-    const entity = await this.findById(id, opts);
+  public async getById(id: string | number, opts?: GetByIdOptions<Entity>): Promise<Entity> {
+    const entity = await this.findById(id, opts)
+
     if (!entity) {
-      throw new NotFoundException(`Unable to find ${this.EntityClass.name} with id: ${id}`);
+      throw new NotFoundException(`Unable to find ${this.EntityClass.name} with id: ${id}`)
     }
-    return entity;
+
+    return entity
   }
 
   /**
@@ -131,9 +191,12 @@ export class TypeOrmQueryService<Entity extends ObjectLiteral>
    * ```
    * @param record - The entity to create.
    */
-  async createOne(record: DeepPartial<Entity>): Promise<Entity> {
-    const entity = await this.ensureIsEntityAndDoesNotExist(record);
-    return this.repo.save(entity);
+  public async createOne(record: DeepPartial<Entity>): Promise<Entity> {
+    const entity = await this.ensureIsEntityAndDoesNotExist(record)
+
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    return this.repo.save(entity)
   }
 
   /**
@@ -148,9 +211,11 @@ export class TypeOrmQueryService<Entity extends ObjectLiteral>
    * ```
    * @param records - The entities to create.
    */
-  async createMany(records: DeepPartial<Entity>[]): Promise<Entity[]> {
-    const entities = await Promise.all(records.map((r) => this.ensureIsEntityAndDoesNotExist(r)));
-    return this.repo.save(entities);
+  public async createMany(records: DeepPartial<Entity>[]): Promise<Entity[]> {
+    const entities = await Promise.all(records.map((r) => this.ensureIsEntityAndDoesNotExist(r)))
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    return this.repo.save(entities)
   }
 
   /**
@@ -165,9 +230,11 @@ export class TypeOrmQueryService<Entity extends ObjectLiteral>
    * @param opts - Additional options.
    */
   async updateOne(id: number | string, update: DeepPartial<Entity>, opts?: UpdateOneOptions<Entity>): Promise<Entity> {
-    this.ensureIdIsNotPresent(update);
-    const entity = await this.getById(id, opts);
-    return this.repo.save(this.repo.merge(entity, update as TypeOrmDeepPartial<Entity>));
+    this.ensureIdIsNotPresent(update)
+    const entity = await this.getById(id, opts)
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    return this.repo.save(this.repo.merge(entity, update))
   }
 
   /**
@@ -183,13 +250,31 @@ export class TypeOrmQueryService<Entity extends ObjectLiteral>
    * @param update - A `Partial` of entity with the fields to update
    * @param filter - A Filter used to find the records to update
    */
-  async updateMany(update: DeepPartial<Entity>, filter: Filter<Entity>): Promise<UpdateManyResponse> {
-    this.ensureIdIsNotPresent(update);
-    const updateResult = await this.filterQueryBuilder
-      .update({ filter })
-      .set({ ...(update as QueryDeepPartialEntity<Entity>) })
-      .execute();
-    return { updatedCount: updateResult.affected || 0 };
+  public async updateMany(update: DeepPartial<Entity>, filter: Filter<Entity>): Promise<UpdateManyResponse> {
+    this.ensureIdIsNotPresent(update)
+    let updateResult: UpdateResult
+
+    // If the update has relations, then fetch all the id's and then do an update on the ids returned
+    if (this.filterQueryBuilder.filterHasRelations(filter)) {
+      const builder = this.filterQueryBuilder.select({ filter }).distinct(true)
+
+      const distinctRecords = await builder.select(`${builder.alias}.id AS id`).getRawMany()
+
+      const ids: unknown[] = distinctRecords.map(({ id }) => id as unknown)
+      const idsFilter = { id: { in: ids } } as unknown as Filter<Entity>
+
+      updateResult = await this.filterQueryBuilder
+        .update({ filter: idsFilter })
+        .set({ ...(update as QueryDeepPartialEntity<Entity>) })
+        .execute()
+    } else {
+      updateResult = await this.filterQueryBuilder
+        .update({ filter })
+        .set({ ...(update as QueryDeepPartialEntity<Entity>) })
+        .execute()
+    }
+
+    return { updatedCount: updateResult.affected || 0 }
   }
 
   /**
@@ -203,13 +288,17 @@ export class TypeOrmQueryService<Entity extends ObjectLiteral>
    *
    * @param id - The `id` of the entity to delete.
    * @param filter Additional filter to use when finding the entity to delete.
+   * @param opts - Additional options.
    */
-  async deleteOne(id: string | number, opts?: DeleteOneOptions<Entity>): Promise<Entity> {
-    const entity = await this.getById(id, opts);
-    if (this.useSoftDelete) {
-      return this.repo.softRemove(entity);
+  public async deleteOne(id: string | number, opts?: DeleteOneOptions<Entity>): Promise<Entity> {
+    const entity = await this.getById(id, opts)
+    if (this.useSoftDelete || opts?.useSoftDelete) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      return this.repo.softRemove(entity)
     }
-    return this.repo.remove(entity);
+
+    return this.repo.remove(entity)
   }
 
   /**
@@ -224,15 +313,35 @@ export class TypeOrmQueryService<Entity extends ObjectLiteral>
    * ```
    *
    * @param filter - A `Filter` to find records to delete.
+   * @param opts - Additional delete many options
    */
-  async deleteMany(filter: Filter<Entity>): Promise<DeleteManyResponse> {
-    let deleteResult: DeleteResult;
-    if (this.useSoftDelete) {
-      deleteResult = await this.filterQueryBuilder.softDelete({ filter }).execute();
+  public async deleteMany(filter: Filter<Entity>, opts?: DeleteManyOptions<Entity>): Promise<DeleteManyResponse> {
+    let deleteResult = {} as DeleteResult
+
+    if (this.filterQueryBuilder.filterHasRelations(filter)) {
+      const builder = this.filterQueryBuilder.select({ filter }).distinct(true)
+
+      const distinctRecords = await builder.addSelect(`${builder.alias}.id`).getRawMany()
+
+      const ids: unknown[] = distinctRecords.map(({ id }) => id as unknown)
+      const idsFilter = { id: { in: ids } } as unknown as Filter<Entity>
+
+      if (ids.length > 0) {
+        if (this.useSoftDelete || opts?.useSoftDelete) {
+          deleteResult = await this.filterQueryBuilder.softDelete({ filter: idsFilter }).execute()
+        } else {
+          deleteResult = await this.filterQueryBuilder.delete({ filter: idsFilter }).execute()
+        }
+      }
     } else {
-      deleteResult = await this.filterQueryBuilder.delete({ filter }).execute();
+      if (this.useSoftDelete || opts?.useSoftDelete) {
+        deleteResult = await this.filterQueryBuilder.softDelete({ filter }).execute()
+      } else {
+        deleteResult = await this.filterQueryBuilder.delete({ filter }).execute()
+      }
     }
-    return { deletedCount: deleteResult.affected || 0 };
+
+    return { deletedCount: deleteResult?.affected || 0 }
   }
 
   /**
@@ -247,10 +356,10 @@ export class TypeOrmQueryService<Entity extends ObjectLiteral>
    * @param id - The `id` of the entity to restore.
    * @param opts Additional filter to use when finding the entity to restore.
    */
-  async restoreOne(id: string | number, opts?: Filterable<Entity>): Promise<Entity> {
-    this.ensureSoftDeleteEnabled();
-    await this.repo.restore(id);
-    return this.getById(id, opts);
+  public async restoreOne(id: string | number, opts?: Filterable<Entity>): Promise<Entity> {
+    this.ensureSoftDeleteEnabled()
+    await this.repo.restore(id)
+    return this.getById(id, opts)
   }
 
   /**
@@ -266,39 +375,42 @@ export class TypeOrmQueryService<Entity extends ObjectLiteral>
    *
    * @param filter - A `Filter` to find records to delete.
    */
-  async restoreMany(filter: Filter<Entity>): Promise<UpdateManyResponse> {
-    this.ensureSoftDeleteEnabled();
-    const result = await this.filterQueryBuilder.softDelete({ filter }).restore().execute();
-    return { updatedCount: result.affected || 0 };
+  public async restoreMany(filter: Filter<Entity>): Promise<UpdateManyResponse> {
+    this.ensureSoftDeleteEnabled()
+    const result = await this.filterQueryBuilder.softDelete({ filter }).restore().execute()
+    return { updatedCount: result.affected || 0 }
   }
 
-  private async ensureIsEntityAndDoesNotExist(e: DeepPartial<Entity>): Promise<Entity> {
-    if (!(e instanceof this.EntityClass)) {
-      return this.ensureEntityDoesNotExist(this.repo.create(e as TypeOrmDeepPartial<Entity>));
+  private async ensureIsEntityAndDoesNotExist(entity: DeepPartial<Entity>): Promise<Entity> {
+    if (!(entity instanceof this.EntityClass)) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      return this.ensureEntityDoesNotExist(this.repo.create(entity))
     }
-    return this.ensureEntityDoesNotExist(e);
+    return this.ensureEntityDoesNotExist(entity)
   }
 
   private async ensureEntityDoesNotExist(e: Entity): Promise<Entity> {
     if (this.repo.hasId(e)) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-      const found = await this.repo.findOneById(this.repo.getId(e) as string | number);
+      const where = this.repo.metadata.getEntityIdMap(e) as FindOptionsWhere<Entity>
+      const found = await this.repo.findOne({ where })
+
       if (found) {
-        throw new Error('Entity already exists');
+        throw new Error('Entity already exists')
       }
     }
-    return e;
+    return e
   }
 
   private ensureIdIsNotPresent(e: DeepPartial<Entity>): void {
     if (this.repo.hasId(e as unknown as Entity)) {
-      throw new Error('Id cannot be specified when updating');
+      throw new Error('Id cannot be specified when updating')
     }
   }
 
   private ensureSoftDeleteEnabled(): void {
     if (!this.useSoftDelete) {
-      throw new MethodNotAllowedException(`Restore not allowed for non soft deleted entity ${this.EntityClass.name}.`);
+      throw new MethodNotAllowedException(`Restore not allowed for non soft deleted entity ${this.EntityClass.name}.`)
     }
   }
 }

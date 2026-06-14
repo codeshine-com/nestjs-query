@@ -1,21 +1,21 @@
-import { Class } from '@codeshine/nestjs-query-core';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { DynamicModule } from '@nestjs/common';
-import { Connection, ConnectionOptions, ObjectLiteral } from 'typeorm';
-import { createTypeOrmQueryServiceProviders } from './providers';
+import { DynamicModule } from '@nestjs/common'
+import { TypeOrmModule } from '@nestjs/typeorm'
+import { Class } from '@codeshine/nestjs-query-core'
+
+import type { DataSource } from 'typeorm'
+
+import { createTypeOrmQueryServiceProviders } from './providers'
 
 export class NestjsQueryTypeOrmModule {
-  static forFeature(
-    entities: Class<ObjectLiteral>[],
-    connection?: Connection | ConnectionOptions | string,
-  ): DynamicModule {
-    const queryServiceProviders = createTypeOrmQueryServiceProviders(entities, connection);
-    const typeOrmModule = TypeOrmModule.forFeature(entities, connection);
+  static forFeature(entities: Class<unknown>[], dataSource?: DataSource | string): DynamicModule {
+    const queryServiceProviders = createTypeOrmQueryServiceProviders(entities, dataSource)
+    const typeOrmModule = TypeOrmModule.forFeature(entities, dataSource)
+
     return {
       imports: [typeOrmModule],
       module: NestjsQueryTypeOrmModule,
       providers: [...queryServiceProviders],
-      exports: [...queryServiceProviders, typeOrmModule],
-    };
+      exports: [...queryServiceProviders, typeOrmModule]
+    }
   }
 }

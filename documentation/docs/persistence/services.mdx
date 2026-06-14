@@ -2,10 +2,10 @@
 title: Services
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
 
-`@nestjs-query` provides a common interface to use difference ORMs inorder to query and mutate your data.
+`@nestjs-query` provides a common interface to use different ORMs in order to query and mutate your data.
 
 The following ORMs are supported out of the box.
 
@@ -32,24 +32,24 @@ All examples assume the following entity.
 <TabItem value="typeorm">
 
 ```ts title="todo-item.entity.ts"
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm'
 
 @Entity()
 export class TodoItemEntity {
   @PrimaryGeneratedColumn()
-  id!: string;
+  id!: string
 
   @Column()
-  title!: string;
+  title!: string
 
   @Column()
-  completed!: boolean;
+  completed!: boolean
 
   @CreateDateColumn()
-  created!: Date;
+  created!: Date
 
   @UpdateDateColumn()
-  updated!: Date;
+  updated!: Date
 }
 ```
 
@@ -57,30 +57,30 @@ export class TodoItemEntity {
 <TabItem value="sequelize">
 
 ```ts title="todo-item.entity.ts"
-import { Table, Column, Model, AllowNull, CreatedAt, UpdatedAt, PrimaryKey, AutoIncrement } from 'sequelize-typescript';
+import { Table, Column, Model, AllowNull, CreatedAt, UpdatedAt, PrimaryKey, AutoIncrement } from 'sequelize-typescript'
 
 @Table
 export class TodoItemEntity extends Model<TodoItemEntity, Partial<TodoItemEntity>> {
   @PrimaryKey
   @AutoIncrement
   @Column
-  id!: number;
+  id!: number
 
   @Column
-  title!: string;
+  title!: string
 
   @AllowNull
   @Column
-  description?: string;
+  description?: string
 
   @Column
-  completed!: boolean;
+  completed!: boolean
 
   @CreatedAt
-  created!: Date;
+  created!: Date
 
   @UpdatedAt
-  updated!: Date;
+  updated!: Date
 }
 ```
 
@@ -88,62 +88,68 @@ export class TodoItemEntity extends Model<TodoItemEntity, Partial<TodoItemEntity
 <TabItem value="mongoose">
 
 ```ts title="todo-item.entity.ts"
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
+import { Document } from 'mongoose'
 
 @Schema({ timestamps: { createdAt: 'created', updatedAt: 'updated' } })
 export class TodoItemEntity extends Document {
   @Prop({ required: true })
-  title!: string;
+  title!: string
 
   @Prop()
-  description?: string;
+  description?: string
 
   @Prop({ required: true })
-  completed!: boolean;
+  completed!: boolean
 
   @Prop({ default: Date.now })
-  created!: Date;
+  created!: Date
 
   @Prop({ default: Date.now })
-  updated!: Date;
+  updated!: Date
 }
 
-export const TodoItemEntitySchema = SchemaFactory.createForClass(TodoItemEntity);
+export const TodoItemEntitySchema = SchemaFactory.createForClass(TodoItemEntity)
 ```
 
 </TabItem>
 <TabItem value="typegoose">
 
 ```ts title="todo-item.entity.ts"
-import { Base } from '@typegoose/typegoose/lib/defaultClasses';
-import { Prop, modelOptions, Ref } from '@typegoose/typegoose';
-import { Types } from 'mongoose';
-import { SubTaskEntity } from '../sub-task/sub-task.entity';
-import { TagEntity } from '../tag/tag.entity';
+import { ObjectId } from '@codeshine/nestjs-query-graphql'
+import { Base } from '@typegoose/typegoose/lib/defaultClasses'
+import { Prop, modelOptions, Ref } from '@typegoose/typegoose'
+import { Types } from 'mongoose'
+import { SubTaskEntity } from '../sub-task/sub-task.entity'
+import { TagEntity } from '../tag/tag.entity'
 
 @modelOptions({
   schemaOptions: {
     timestamps: { createdAt: 'created', updatedAt: 'updated' },
     collection: 'todo-items',
-    toObject: { virtuals: true },
-  },
+    toObject: { virtuals: true }
+  }
 })
 export class TodoItemEntity implements Base {
+  @ObjectId()
+  _id!: Types.ObjectId
+
+  id!: string
+
   @Prop({ required: true })
-  title!: string;
+  title!: string
 
   @Prop()
-  description?: string;
+  description?: string
 
   @Prop({ required: true })
-  completed!: boolean;
+  completed!: boolean
 
   @Prop({ default: Date.now })
-  created!: Date;
+  created!: Date
 
   @Prop({ default: Date.now })
-  updated!: Date;
+  updated!: Date
 }
 ```
 
@@ -154,7 +160,7 @@ export class TodoItemEntity implements Base {
 
 ### Module
 
-The `nestjs-query` `typeorm`, `sequelize`, `mongoose`, and 'typegoose' packages provide a module that will add providers
+The `nestjs-query` `typeorm`, `sequelize`, `mongoose`, and `typegoose` packages provide a module that will add providers
 to inject auto-created `QueryServices` using the `@InjectQueryService` decorator.
 
 In order to use the decorator you will need to use the module that comes with the `nestjs-query` orm module providing it your entities that you want the services created for.
@@ -172,14 +178,14 @@ In order to use the decorator you will need to use the module that comes with th
 <TabItem value="typeorm">
 
 ```ts title="todo-item.module.ts" {8}
-import { NestjsQueryTypeOrmModule } from '@codeshine/nestjs-query-typeorm';
-import { Module } from '@nestjs/common';
-import { TodoItemEntity } from './todo-item.entity';
-import { TodoItemResolver } from './todo-item.resolver';
+import { NestjsQueryTypeOrmModule } from '@codeshine/nestjs-query-typeorm'
+import { Module } from '@nestjs/common'
+import { TodoItemEntity } from './todo-item.entity'
+import { TodoItemResolver } from './todo-item.resolver'
 
 @Module({
   providers: [TodoItemResolver],
-  imports: [NestjsQueryTypeOrmModule.forFeature([TodoItemEntity])],
+  imports: [NestjsQueryTypeOrmModule.forFeature([TodoItemEntity])]
 })
 export class TodoItemModule {}
 ```
@@ -188,14 +194,14 @@ export class TodoItemModule {}
 <TabItem value="sequelize">
 
 ```ts title="todo-item.module.ts" {8}
-import { NestjsQuerySequelizeModule } from '@codeshine/nestjs-query-sequelize';
-import { Module } from '@nestjs/common';
-import { TodoItemEntity } from './todo-item.entity';
-import { TodoItemResolver } from './todo-item.resolver';
+import { NestjsQuerySequelizeModule } from '@codeshine/nestjs-query-sequelize'
+import { Module } from '@nestjs/common'
+import { TodoItemEntity } from './todo-item.entity'
+import { TodoItemResolver } from './todo-item.resolver'
 
 @Module({
   providers: [TodoItemResolver],
-  imports: [NestjsQuerySequelizeModule.forFeature([TodoItemEntity])],
+  imports: [NestjsQuerySequelizeModule.forFeature([TodoItemEntity])]
 })
 export class TodoItemModule {}
 ```
@@ -204,18 +210,16 @@ export class TodoItemModule {}
 <TabItem value="mongoose">
 
 ```ts title="todo-item.module.ts" {9-11}
-import { NestjsQueryMongooseModule } from '@codeshine/nestjs-query-mongoose';
-import { Module } from '@nestjs/common';
-import { TodoItemEntity } from './todo-item.entity';
-import { TodoItemResolver } from './todo-item.resolver';
+import { NestjsQueryMongooseModule } from '@codeshine/nestjs-query-mongoose'
+import { Module } from '@nestjs/common'
+import { TodoItemEntity } from './todo-item.entity'
+import { TodoItemResolver } from './todo-item.resolver'
 
 @Module({
   providers: [TodoItemResolver],
   imports: [
-    NestjsQueryMongooseModule.forFeature([
-      { document: TodoItemEntity, name: TodoItemEntity.name, schema: TodoItemEntitySchema },
-    ]),
-  ],
+    NestjsQueryMongooseModule.forFeature([{ document: TodoItemEntity, name: TodoItemEntity.name, schema: TodoItemEntitySchema }])
+  ]
 })
 export class TodoItemModule {}
 ```
@@ -224,14 +228,14 @@ export class TodoItemModule {}
 <TabItem value="typegoose">
 
 ```ts title="todo-item.module.ts" {8}
-import { NestjsQueryTypegooseModule } from '@codeshine/nestjs-query-typegoose';
-import { Module } from '@nestjs/common';
-import { TodoItemEntity } from './todo-item.entity';
-import { TodoItemResolver } from './todo-item.resolver';
+import { NestjsQueryTypegooseModule } from '@codeshine/nestjs-query-typegoose'
+import { Module } from '@nestjs/common'
+import { TodoItemEntity } from './todo-item.entity'
+import { TodoItemResolver } from './todo-item.resolver'
 
 @Module({
   providers: [TodoItemResolver],
-  imports: [NestjsQueryTypegooseModule.forFeature([TodoItemEntity])],
+  imports: [NestjsQueryTypegooseModule.forFeature([TodoItemEntity])]
 })
 export class TodoItemModule {}
 ```
@@ -244,16 +248,16 @@ export class TodoItemModule {}
 Once you have imported the correct module, use `@InjectQueryService` decorator to inject a `QueryService` into your class or resolver.
 
 ```ts title="todo-item.resolver.ts" {10}
-import { QueryService, InjectQueryService } from '@codeshine/nestjs-query-core';
-import { CRUDResolver } from '@codeshine/nestjs-query-graphql';
-import { Resolver } from '@nestjs/graphql';
-import { TodoItemDTO } from './todo-item.dto';
-import { TodoItemEntity } from './todo-item.entity';
+import { QueryService, InjectQueryService } from '@codeshine/nestjs-query-core'
+import { CRUDResolver } from '@codeshine/nestjs-query-graphql'
+import { Resolver } from '@nestjs/graphql'
+import { TodoItemDTO } from './todo-item.dto'
+import { TodoItemEntity } from './todo-item.entity'
 
 @Resolver(() => TodoItemDTO)
 export class TodoItemResolver extends CRUDResolver(TodoItemDTO) {
   constructor(@InjectQueryService(TodoItemEntity) readonly service: QueryService<TodoItemEntity>) {
-    super(service);
+    super(service)
   }
 }
 ```
@@ -281,7 +285,7 @@ entities. To read more about querying take a look at the [Queries Doc](../concep
 Get all records
 
 ```ts
-const records = await this.service.query({});
+const records = await this.service.query({})
 ```
 
 ### Filtering
@@ -295,9 +299,9 @@ To find all completed `TodoItems` by use can use the `is` operator.
 ```ts
 const records = await this.service.query({
   filter: {
-    completed: { is: true },
-  },
-});
+    completed: { is: true }
+  }
+})
 ```
 
 ### Sorting
@@ -312,9 +316,9 @@ Sorting records by `completed` and `title`.
 const records = await this.service.query({
   sorting: [
     { field: 'completed', direction: SortDirection.ASC },
-    { field: 'title', direction: SortDirection.DESC },
-  ],
-});
+    { field: 'title', direction: SortDirection.DESC }
+  ]
+})
 ```
 
 ### Paging
@@ -327,8 +331,8 @@ Skip the first 20 records and return the next 10.
 
 ```ts
 const records = await this.service.query({
-  paging: { limit: 10, offset: 20 },
-});
+  paging: { limit: 10, offset: 20 }
+})
 ```
 
 ### Find By Id
@@ -338,7 +342,7 @@ To find a single record you can use the `findById` method.
 #### Example
 
 ```ts
-const records = await this.service.findById(1);
+const records = await this.service.findById(1)
 ```
 
 ### Get By Id
@@ -349,9 +353,9 @@ The `getById` method is the same as the `findById` with one key difference, it w
 
 ```ts
 try {
-  const records = await this.service.getById(1);
+  const records = await this.service.getById(1)
 } catch (e) {
-  console.error('Unable to get record with id = 1');
+  console.error('Unable to get record with id = 1')
 }
 ```
 
@@ -359,7 +363,7 @@ try {
 
 To perform an `aggregate` query you can use the `aggregate` method which accepts a `Filter` and `AggregateQuery`.
 
-Supported aggregates are `count`, 'sum', 'avg', `min` and `max`.
+Supported aggregates are `count`, `sum`, `avg`, `min` and `max`.
 
 In this example we'll aggregate on all records.
 
@@ -369,27 +373,27 @@ const aggregateResponse = await this.service.aggregate(
   {
     count: ['id'],
     min: ['title'],
-    max: ['title'],
-  },
-);
+    max: ['title']
+  }
+)
 ```
 
 The response will look like the following
 
 ```ts
-[
+;[
   {
     count: {
-      id: 10,
+      id: 10
     },
     min: {
-      title: 'Aggregate Todo Items',
+      title: 'Aggregate Todo Items'
     },
     min: {
-      title: 'Query Todo Items',
-    },
-  },
-];
+      title: 'Query Todo Items'
+    }
+  }
+]
 ```
 
 In this example we'll aggregate on all completed TodoItems
@@ -400,9 +404,9 @@ const aggregateResponse = await this.service.aggregate(
   {
     count: ['id'],
     min: ['title'],
-    max: ['title'],
-  },
-);
+    max: ['title']
+  }
+)
 ```
 
 ## Creating
@@ -416,8 +420,8 @@ To create a single record use the `createOne` method.
 ```ts
 const createdRecord = await this.service.createOne({
   title: 'Foo',
-  completed: false,
-});
+  completed: false
+})
 ```
 
 ### Create Many
@@ -429,8 +433,8 @@ To create multiple records use the `createMany` method.
 ```ts
 const createdRecords = await this.service.createMany([
   { title: 'Foo', completed: false },
-  { title: 'Bar', completed: true },
-]);
+  { title: 'Bar', completed: true }
+])
 ```
 
 ## Updating
@@ -444,7 +448,7 @@ To update a single record use the `updateOne` method.
 Updates the record with an id equal to 1 to completed.
 
 ```ts
-const updatedRecord = await this.service.updateOne(1, { completed: true });
+const updatedRecord = await this.service.updateOne(1, { completed: true })
 ```
 
 ### Update Many
@@ -460,8 +464,8 @@ Updates all `TodoItemEntities` to completed if their title ends in `Bar`
 ```ts
 const { updatedCount } = await this.service.updateMany(
   { completed: true }, // update
-  { completed: { is: false }, title: { like: '%Bar' } }, // filter
-);
+  { completed: { is: false }, title: { like: '%Bar' } } // filter
+)
 ```
 
 ## Deleting
@@ -475,7 +479,7 @@ To delete a single record use the `deleteOne` method.
 Delete the record with an id equal to 1.
 
 ```ts
-const deletedRecord = await this.service.deleteOne(1);
+const deletedRecord = await this.service.deleteOne(1)
 ```
 
 ### Delete Many
@@ -490,8 +494,8 @@ Delete all `TodoItemEntities` older than `Jan 1, 2019`.
 
 ```ts
 const { deletedCount } = await this.service.deleteMany(
-  { created: { lte: new Date('2019-1-1') } }, // filter
-);
+  { created: { lte: new Date('2019-1-1') } } // filter
+)
 ```
 
 ## Foreign Keys
@@ -527,41 +531,41 @@ import {
   UpdateDateColumn,
   ObjectType,
   ManyToOne,
-  JoinColumn,
-} from 'typeorm';
-import { TodoItemEntity } from '../todo-item/todo-item.entity';
+  JoinColumn
+} from 'typeorm'
+import { TodoItemEntity } from '../todo-item/todo-item.entity'
 
 @Entity({ name: 'sub_task' })
 export class SubTaskEntity {
   @PrimaryGeneratedColumn()
-  id!: number;
+  id!: number
 
   @Column()
-  title!: string;
+  title!: string
 
   @Column({ nullable: true })
-  description?: string;
+  description?: string
 
   @Column()
-  completed!: boolean;
+  completed!: boolean
 
   // add the todoItemId to the model
   @Column({ nullable: false, name: 'todo_item_id' })
-  todoItemId!: string;
+  todoItemId!: string
 
   @ManyToOne((): ObjectType<TodoItemEntity> => TodoItemEntity, (td) => td.subTasks, {
     onDelete: 'CASCADE',
-    nullable: false,
+    nullable: false
   })
   // specify the join column we want to use.
   @JoinColumn({ name: 'todo_item_id' })
-  todoItem!: TodoItemEntity;
+  todoItem!: TodoItemEntity
 
   @CreateDateColumn()
-  created!: Date;
+  created!: Date
 
   @UpdateDateColumn()
-  updated!: Date;
+  updated!: Date
 }
 ```
 
@@ -579,39 +583,39 @@ import {
   UpdatedAt,
   Model,
   AutoIncrement,
-  PrimaryKey,
-} from 'sequelize-typescript';
-import { TodoItemEntity } from '../todo-item/entity/todo-item.entity';
+  PrimaryKey
+} from 'sequelize-typescript'
+import { TodoItemEntity } from '../todo-item/entity/todo-item.entity'
 
 @Table({})
 export class SubTaskEntity extends Model<SubTaskEntity, Partial<SubTaskEntity>> {
   @PrimaryKey
   @AutoIncrement
   @Column
-  id!: number;
+  id!: number
 
   @Column
-  title!: string;
+  title!: string
 
   @AllowNull
   @Column
-  description?: string;
+  description?: string
 
   @Column
-  completed!: boolean;
+  completed!: boolean
 
   @Column
   @ForeignKey(() => TodoItemEntity)
-  todoItemId!: number;
+  todoItemId!: number
 
   @BelongsTo(() => TodoItemEntity)
-  todoItem!: TodoItemEntity;
+  todoItem!: TodoItemEntity
 
   @CreatedAt
-  created!: Date;
+  created!: Date
 
   @UpdatedAt
-  updated!: Date;
+  updated!: Date
 }
 ```
 
@@ -621,32 +625,32 @@ export class SubTaskEntity extends Model<SubTaskEntity, Partial<SubTaskEntity>> 
 Then we could add the `todoItemId` to the SubTaskDTO.
 
 ```ts title="sub-task.dto.ts" {24-26}
-import { FilterableField, IDField } from '@codeshine/nestjs-query-graphql';
-import { ObjectType, ID, GraphQLISODateTime } from '@nestjs/graphql';
+import { FilterableField, IDField } from '@codeshine/nestjs-query-graphql'
+import { ObjectType, ID, GraphQLISODateTime } from '@nestjs/graphql'
 
 @ObjectType('SubTask')
 export class SubTaskDTO {
   @IDField(() => ID)
-  id!: number;
+  id!: number
 
   @FilterableField()
-  title!: string;
+  title!: string
 
   @FilterableField({ nullable: true })
-  description?: string;
+  description?: string
 
   @FilterableField()
-  completed!: boolean;
+  completed!: boolean
 
   @FilterableField(() => GraphQLISODateTime)
-  created!: Date;
+  created!: Date
 
   @FilterableField(() => GraphQLISODateTime)
-  updated!: Date;
+  updated!: Date
 
   // expose the todoItemId as a filterable field.
   @FilterableField()
-  todoItemId!: string;
+  todoItemId!: string
 }
 ```
 
@@ -658,7 +662,7 @@ This section only applies when you combine your DTO and entity and are using Typ
 
 When your DTO and entity are the same class and you have relations defined, you should not decorate your the relations in the DTO with `@Field` or `@FilterableField`.
 
-Instead decorate the class with `@CursorConnection`, `@OffsetConnection`, '@UnPagedRelation' or `@Relation`.
+Instead decorate the class with `@CursorConnection`, `@OffsetConnection`, `@UnPagedRelation` or `@Relation`.
 
 ### Example
 
@@ -675,58 +679,50 @@ Assume you have the following subtask definition.
 <TabItem value="typeorm">
 
 ```ts title="sub-task.ts"  {15,38-44}
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
-import { ObjectType, ID } from '@nestjs/graphql';
-import { FilterableField, IDField, Relation } from '@codeshine/nestjs-query-graphql';
-import { TodoItem } from '../todo-item/todo-item';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm'
+import { ObjectType, ID } from '@nestjs/graphql'
+import { FilterableField, IDField, Relation } from '@codeshine/nestjs-query-graphql'
+import { TodoItem } from '../todo-item/todo-item'
 
 @ObjectType()
-@Relation('todoItem', () => TodoItem, { disableRemove: true })
+@Relation('todoItem', () => TodoItem, { update: { enabled: true } })
 @Entity({ name: 'sub_task' })
 export class SubTask {
   @IDField(() => ID)
   @PrimaryGeneratedColumn()
-  id!: number;
+  id!: number
 
   @FilterableField()
   @Column()
-  title!: string;
+  title!: string
 
   @FilterableField()
   @Column({ nullable: true })
-  description?: string;
+  description?: string
 
   @FilterableField()
   @Column()
-  completed!: boolean;
+  completed!: boolean
 
   @FilterableField()
   @Column({ nullable: false, name: 'todo_item_id' })
-  todoItemId!: string;
+  todoItemId!: string
 
   // do not decorate with @Field
   @ManyToOne(() => TodoItem, (td) => td.subTasks, {
     onDelete: 'CASCADE',
-    nullable: false,
+    nullable: false
   })
   @JoinColumn({ name: 'todo_item_id' })
-  todoItem!: TodoItem;
+  todoItem!: TodoItem
 
   @FilterableField()
   @CreateDateColumn()
-  created!: Date;
+  created!: Date
 
   @FilterableField()
   @UpdateDateColumn()
-  updated!: Date;
+  updated!: Date
 }
 ```
 
@@ -744,51 +740,51 @@ import {
   UpdatedAt,
   Model,
   AutoIncrement,
-  PrimaryKey,
-} from 'sequelize-typescript';
-import { FilterableField, IDField } from '@codeshine/nestjs-query-graphql';
-import { ObjectType, ID, GraphQLISODateTime } from '@nestjs/graphql';
-import { TodoItem } from '../todo-item/entity/todo-item';
+  PrimaryKey
+} from 'sequelize-typescript'
+import { FilterableField, IDField } from '@codeshine/nestjs-query-graphql'
+import { ObjectType, ID, GraphQLISODateTime } from '@nestjs/graphql'
+import { TodoItem } from '../todo-item/entity/todo-item'
 
 @ObjectType()
-@Relation('todoItem', () => TodoItem, { disableRemove: true })
+@Relation('todoItem', () => TodoItem, { update: { enabled: true } })
 @Table
 export class SubTaskEntity extends Model<SubTaskEntity, Partial<SubTaskEntity>> {
   @IDField(() => ID)
   @PrimaryKey
   @AutoIncrement
   @Column
-  id!: number;
+  id!: number
 
   @FilterableField()
   @Column
-  title!: string;
+  title!: string
 
   @FilterableField({ nullable: true })
   @AllowNull
   @Column
-  description?: string;
+  description?: string
 
   @FilterableField()
   @Column
-  completed!: boolean;
+  completed!: boolean
 
   @FilterableField()
   @Column
   @ForeignKey(() => TodoItemEntity)
-  todoItemId!: number;
+  todoItemId!: number
 
   // do not decorate with @Field
   @BelongsTo(() => TodoItem)
-  todoItem!: TodoItem;
+  todoItem!: TodoItem
 
   @FilterableField(() => GraphQLISODateTime)
   @CreatedAt
-  created!: Date;
+  created!: Date
 
   @FilterableField(() => GraphQLISODateTime)
   @UpdatedAt
-  updated!: Date;
+  updated!: Date
 }
 ```
 

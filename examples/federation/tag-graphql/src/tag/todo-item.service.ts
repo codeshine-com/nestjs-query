@@ -1,6 +1,7 @@
-import { InjectQueryService, QueryService, RelationQueryService } from '@codeshine/nestjs-query-core';
-import { TodoItemReferenceDTO } from './dto/todo-item-reference.dto';
-import { TagTodoItemEntity } from './tag-todo-item.entity';
+import { InjectQueryService, QueryService, RelationQueryService } from '@codeshine/nestjs-query-core'
+
+import { TodoItemReferenceDTO } from './dto/todo-item-reference.dto'
+import { TagTodoItemEntity } from './tag-todo-item.entity'
 
 @QueryService(TodoItemReferenceDTO)
 export class TodoItemService extends RelationQueryService<TodoItemReferenceDTO> {
@@ -8,8 +9,8 @@ export class TodoItemService extends RelationQueryService<TodoItemReferenceDTO> 
     super({
       tagTodoItems: {
         service: tagTodoItemService,
-        query: (ref: TodoItemReferenceDTO) => ({ filter: { todoItemId: { eq: ref.id } } }),
-      },
-    });
+        query: (ref: TodoItemReferenceDTO) => ({ filter: { todoItemId: { eq: ref.id } } })
+      }
+    })
   }
 }

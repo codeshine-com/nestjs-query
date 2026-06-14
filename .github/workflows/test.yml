@@ -2,56 +2,117 @@ name: Test
 
 on:
   push:
-    branches:    # Array of patterns that match refs/heads
-      - master     # Push events on master branch
-      - releases/* # Push events to branches matching refs/heads/releases/*
-  pull_request:  # Specify a second event with pattern matching
+    branches:
+      - master
+      - releases/*
+  pull_request:
+
 env:
-  CI: true
+  NX_BRANCH: ${{ github.event.number }}
+  NX_RUN_GROUP: ${{ github.run_id }}
+
 jobs:
-  test:
+
+  setup:
+    uses: ./.github/workflows/shared.setup-env.yml
+
+  check:
+    needs: setup
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        node-version: [12.x, 14.x]
-        db-type: ['postgres', 'mysql']
+        node-version: [ 22.x, 24.x ]
+        target: [ 'build', 'test', 'lint' ]
     steps:
-      - uses: actions/checkout@v2
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - run: docker-compose -f ./examples/docker-compose.yml up -d
-      - name: Get npm cache directory
-        id: npm-cache
-        run: |
-          echo "::set-output name=dir::$(npm config get cache)"
-      - name: Restore Dependencies
-        uses: actions/cache@v2
+
+      - uses: actions/checkout@v4
         with:
-          path: ${{ steps.npm-cache.outputs.dir }}
-          key: ${{ runner.os }}-node-${{matrix.node-version}}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-${{matrix.node-version}}-
-      - run: npm ci
-      - run: npm run bootstrap
-      - run: npm run build
-      - run: npm test
+          fetch-depth: 0
+
+      - name: Setup
+        uses: ./.github/actions/setup-step
+
+      - name: GIT config
+        if: matrix.target == 'build'
+        run: |
+          git config user.name "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+
+      - name: nx workspace:version
+        if: matrix.target == 'build'
+        run: yarn nx run workspace:version
+
+      - name: nx affected:${{ matrix.target }}
+        run: yarn nx run-many --target=${{ matrix.target }} --all
+
+      - name: Codecov
+        uses: codecov/codecov-action@v2
+        if: matrix.target == 'test'
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: ./coverage
+          fail_ci_if_error: false
+          name: run-unit-test-${{ matrix.node-version }}
+
+  e2e-test:
+    needs: setup
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [ 22.x, 24.x ]
+        db-type: ['postgres', 'mysql']
+    steps:
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup
+        uses: ./.github/actions/setup-step
+
+      - name: docker compose
+        run: docker compose -f ./examples/docker-compose.yml up -d
+
+      - name: nx affected:e2e
+        run: yarn nx run-many --target=e2e --all
         env:
           NESTJS_QUERY_DB_TYPE: ${{ matrix.db-type }}
-      - name: Coveralls GitHub Action
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          flag-name: run-${{ matrix.node-version }}-${{ matrix.db-type }}
-          parallel: true
 
-  finish:
-    needs: test
+      - name: Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: ./coverage
+          fail_ci_if_error: false
+          name: run-e2e-${{ matrix.node-version }}-${{ matrix.db-type }}
+
+  federation-e2e-test:
     runs-on: ubuntu-latest
     steps:
-      - name: Coveralls Finished
-        uses: coverallsapp/github-action@master
+      - uses: actions/checkout@v4
         with:
-          github-token: ${{ secrets.github_token }}
-          parallel-finished: true
+          fetch-depth: 0
+
+      - name: Set up Docker Compose
+        uses: docker/setup-compose-action@v1
+
+      - name: Build and run Federation E2E tests
+        run: |
+          cd examples/federation-v2-e2e
+          docker compose --profile test up --build --exit-code-from e2e-test e2e-test
+
+      - name: Show logs on failure
+        if: failure()
+        run: |
+          cd examples/federation-v2-e2e
+          docker compose logs

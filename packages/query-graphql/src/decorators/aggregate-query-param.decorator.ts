@@ -1,22 +1,35 @@
-import { AggregateQuery } from '@codeshine/nestjs-query-core';
-import { GraphQLResolveInfo } from 'graphql';
-import { GqlExecutionContext } from '@nestjs/graphql';
-import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import graphqlFields from 'graphql-fields';
+import { createParamDecorator, ExecutionContext } from '@nestjs/common'
+import { GqlExecutionContext } from '@nestjs/graphql'
+import { GraphQLResolveInfo } from 'graphql'
 
-const EXCLUDED_FIELDS = ['__typename'];
-const QUERY_OPERATORS: (keyof AggregateQuery<unknown>)[] = ['groupBy', 'count', 'avg', 'sum', 'min', 'max'];
+import type { AggregateQuery, QueryResolveTree } from '@codeshine/nestjs-query-core'
+
+import { removePagingFromSimplifiedInfo, simplifyResolveInfo } from './graphql-resolve-info.utils'
+
+const QUERY_OPERATORS: (keyof AggregateQuery<unknown>)[] = ['groupBy', 'count', 'avg', 'sum', 'min', 'max']
+
 export const AggregateQueryParam = createParamDecorator(<DTO>(data: unknown, ctx: ExecutionContext) => {
-  const info = GqlExecutionContext.create(ctx).getInfo<GraphQLResolveInfo>();
-  const fields = graphqlFields(info, {}, { excludedFields: EXCLUDED_FIELDS }) as Record<
-    keyof AggregateQuery<DTO>,
-    Record<keyof DTO, unknown>
-  >;
-  return QUERY_OPERATORS.filter((operator) => !!fields[operator]).reduce((query, operator) => {
-    const queryFields = Object.keys(fields[operator]) as (keyof DTO)[];
-    if (queryFields && queryFields.length) {
-      return { ...query, [operator]: queryFields };
+  const info = GqlExecutionContext.create(ctx).getInfo<GraphQLResolveInfo>()
+  const simpleResolverInfo = removePagingFromSimplifiedInfo(simplifyResolveInfo<DTO>(info))
+
+  return QUERY_OPERATORS.reduce((query, operator) => {
+    if (simpleResolverInfo.fields[operator]) {
+      const simpleOperator = simpleResolverInfo.fields[operator] as QueryResolveTree<DTO> | undefined
+      const operatorFields = Object.keys(simpleOperator.fields || {})
+
+      if (operatorFields && operatorFields.length > 0) {
+        return {
+          ...query,
+          [operator]: operatorFields.map((operatorField) => ({
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            field: simpleOperator.fields[operatorField].name,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            args: simpleOperator.fields[operatorField].args
+          }))
+        }
+      }
     }
-    return query;
-  }, {} as AggregateQuery<DTO>);
-});
+
+    return query
+  }, {} as AggregateQuery<DTO>)
+})

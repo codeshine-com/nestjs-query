@@ -1,11 +1,12 @@
-import { NestjsQueryGraphQLModule } from '@codeshine/nestjs-query-graphql';
-import { NestjsQueryTypeOrmModule } from '@codeshine/nestjs-query-typeorm';
-import { Module } from '@nestjs/common';
-import { SubTaskDTO } from './dto/sub-task.dto';
-import { CreateSubTaskDTO } from './dto/subtask-input.dto';
-import { SubTaskUpdateDTO } from './dto/subtask-update.dto';
-import { SubTaskEntity } from './sub-task.entity';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Module } from '@nestjs/common'
+import { NestjsQueryGraphQLModule } from '@codeshine/nestjs-query-graphql'
+import { NestjsQueryTypeOrmModule } from '@codeshine/nestjs-query-typeorm'
+
+import { JwtAuthGuard } from '../auth/jwt-auth.guard'
+import { SubTaskDTO } from './dto/sub-task.dto'
+import { CreateSubTaskDTO } from './dto/subtask-input.dto'
+import { SubTaskUpdateDTO } from './dto/subtask-update.dto'
+import { SubTaskEntity } from './sub-task.entity'
 
 @Module({
   imports: [
@@ -19,10 +20,10 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
           UpdateDTOClass: SubTaskUpdateDTO,
           enableAggregate: true,
           enableSubscriptions: true,
-          guards: [JwtAuthGuard],
-        },
-      ],
-    }),
-  ],
+          guards: [JwtAuthGuard]
+        }
+      ]
+    })
+  ]
 })
 export class SubTaskModule {}

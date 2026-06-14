@@ -1,33 +1,40 @@
-import { FilterableField, KeySet, QueryOptions, Relation } from '@codeshine/nestjs-query-graphql';
-import { ObjectType, ID, GraphQLISODateTime } from '@nestjs/graphql';
-import { TodoItemDTO } from '../../todo-item/dto/todo-item.dto';
+import { GraphQLISODateTime, ID, ObjectType } from '@nestjs/graphql'
+import { FilterableField, KeySet, ObjectId, QueryOptions, Relation } from '@codeshine/nestjs-query-graphql'
+import mongoose from 'mongoose'
+
+import { TodoItemDTO } from '../../todo-item/dto/todo-item.dto'
 
 @ObjectType('SubTask')
 @KeySet(['id'])
 @QueryOptions({ enableTotalCount: true })
-@Relation('todoItem', () => TodoItemDTO, { disableRemove: true })
+@Relation('todoItem', () => TodoItemDTO, {
+  update: { enabled: true }
+})
 export class SubTaskDTO {
+  @ObjectId()
+  _id: mongoose.Types.ObjectId
+
   @FilterableField(() => ID)
-  id!: string;
+  id!: string
 
   @FilterableField()
-  title!: string;
+  title!: string
 
   @FilterableField({ nullable: true })
-  description?: string;
+  description?: string
 
   @FilterableField()
-  completed!: boolean;
+  completed!: boolean
 
   @FilterableField(() => GraphQLISODateTime)
-  createdAt!: Date;
+  createdAt!: Date
 
   @FilterableField(() => GraphQLISODateTime)
-  updatedAt!: Date;
+  updatedAt!: Date
 
   @FilterableField({ nullable: true })
-  createdBy?: string;
+  createdBy?: string
 
   @FilterableField({ nullable: true })
-  updatedBy?: string;
+  updatedBy?: string
 }

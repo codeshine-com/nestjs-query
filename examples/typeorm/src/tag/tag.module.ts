@@ -1,9 +1,10 @@
-import { NestjsQueryGraphQLModule } from '@codeshine/nestjs-query-graphql';
-import { NestjsQueryTypeOrmModule } from '@codeshine/nestjs-query-typeorm';
-import { Module } from '@nestjs/common';
-import { TagInputDTO } from './dto/tag-input.dto';
-import { TagDTO } from './dto/tag.dto';
-import { TagEntity } from './tag.entity';
+import { Module } from '@nestjs/common'
+import { NestjsQueryGraphQLModule } from '@codeshine/nestjs-query-graphql'
+import { NestjsQueryTypeOrmModule } from '@codeshine/nestjs-query-typeorm'
+
+import { TagDTO } from './dto/tag.dto'
+import { TagInputDTO } from './dto/tag-input.dto'
+import { TagEntity } from './tag.entity'
 
 @Module({
   imports: [
@@ -15,10 +16,10 @@ import { TagEntity } from './tag.entity';
           EntityClass: TagEntity,
           CreateDTOClass: TagInputDTO,
           UpdateDTOClass: TagInputDTO,
-          enableAggregate: true,
-        },
-      ],
-    }),
-  ],
+          enableAggregate: true
+        }
+      ]
+    })
+  ]
 })
 export class TagModule {}

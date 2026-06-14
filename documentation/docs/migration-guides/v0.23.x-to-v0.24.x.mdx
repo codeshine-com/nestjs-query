@@ -2,8 +2,8 @@
 title: v0.23.x to v0.24.x
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
 
 ## Removed Public ConnectionType and SortType function.
 
@@ -17,22 +17,22 @@ QueryArgsType.
 ### Old
 
 ```ts
-import { ConnectionType, SortType } from '@codeshine/nestjs-query-graphql';
-import { TodoItemDTO } from './dto/todo-item.dto';
+import { ConnectionType, SortType } from '@codeshine/nestjs-query-graphql'
+import { TodoItemDTO } from './dto/todo-item.dto'
 
-export const TodoItemConnection = ConnectionType(TodoItemDTO);
-export const TodoItemSort = SortType(TodoItemDTO);
+export const TodoItemConnection = ConnectionType(TodoItemDTO)
+export const TodoItemSort = SortType(TodoItemDTO)
 ```
 
 ### New
 
 ```ts
-import { QueryArgsType } from '@codeshine/nestjs-query-graphql';
-import { TodoItemDTO } from './dto/todo-item.dto';
+import { QueryArgsType } from '@codeshine/nestjs-query-graphql'
+import { TodoItemDTO } from './dto/todo-item.dto'
 
-export const TodoItemQueryArgs = QueryArgsType(TodoItemDTO);
-export const TodoItemConnection = TodoItemQueryArgs.ConnectionType;
-export const TodoItemSort = TodoItemQueryArgs.SortType;
+export const TodoItemQueryArgs = QueryArgsType(TodoItemDTO)
+export const TodoItemConnection = TodoItemQueryArgs.ConnectionType
+export const TodoItemSort = TodoItemQueryArgs.SortType
 ```
 
 ## `@QueryOptions` Decorator
@@ -47,11 +47,11 @@ In previous versions you had to specify options for querying and connections in 
 ### Old
 
 ```ts title="todo-item.module.ts"
-import { NestjsQueryGraphQLModule } from '@codeshine/nestjs-query-graphql';
-import { NestjsQueryTypeOrmModule } from '@codeshine/nestjs-query-typeorm';
-import { Module } from '@nestjs/common';
-import { TodoItemDTO } from './todo-item.dto';
-import { TodoItemEntity } from './todo-item.entity';
+import { NestjsQueryGraphQLModule } from '@codeshine/nestjs-query-graphql'
+import { NestjsQueryTypeOrmModule } from '@codeshine/nestjs-query-typeorm'
+import { Module } from '@nestjs/common'
+import { TodoItemDTO } from './todo-item.dto'
+import { TodoItemEntity } from './todo-item.entity'
 
 @Module({
   imports: [
@@ -66,11 +66,11 @@ import { TodoItemEntity } from './todo-item.entity';
           defaultResultSize: 5,
           maxResultSize: 100,
           defaultFilter: { completed: { is: true } },
-          defaultSort: [{ field: 'title', direction: SortDirection.ASC }],
-        },
-      ],
-    }),
-  ],
+          defaultSort: [{ field: 'title', direction: SortDirection.ASC }]
+        }
+      ]
+    })
+  ]
 })
 export class TodoItemModule {}
 ```
@@ -78,8 +78,8 @@ export class TodoItemModule {}
 ### New
 
 ```ts title="todo-item.dto.ts"
-import { FilterableField, QueryOptions, PagingStrategies } from '@codeshine/nestjs-query-graphql';
-import { ObjectType, ID, GraphQLISODateTime, Field } from '@nestjs/graphql';
+import { FilterableField, QueryOptions, PagingStrategies } from '@codeshine/nestjs-query-graphql'
+import { ObjectType, ID, GraphQLISODateTime, Field } from '@nestjs/graphql'
 
 @ObjectType('TodoItem')
 @QueryOptions({
@@ -88,22 +88,22 @@ import { ObjectType, ID, GraphQLISODateTime, Field } from '@nestjs/graphql';
   defaultResultSize: 5, // return 5 records by default
   maxResultSize: 100, // do not allow querying for more than 100 records at a time
   defaultFilter: { completed: { is: true } }, // default filter when one is not provided
-  defaultSort: [{ field: 'title', direction: SortDirection.ASC }], // default sort when one is not provided.
+  defaultSort: [{ field: 'title', direction: SortDirection.ASC }] // default sort when one is not provided.
 })
 export class TodoItemDTO {
   @FilterableField(() => ID)
-  id!: string;
+  id!: string
 
   @FilterableField()
-  title!: string;
+  title!: string
 
   @FilterableField()
-  completed!: boolean;
+  completed!: boolean
 
   @FilterableField(() => GraphQLISODateTime)
-  created!: Date;
+  created!: Date
 
   @FilterableField(() => GraphQLISODateTime)
-  updated!: Date;
+  updated!: Date
 }
 ```

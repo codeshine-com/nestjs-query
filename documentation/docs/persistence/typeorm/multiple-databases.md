@@ -37,8 +37,8 @@ const secretEntities = [SecretEntity];
     ConfigModule.forRoot(environment),
     TypeOrmModule.forRoot({
       // name: MUSIC_DB_CONNECTION, // if you leave this out, this will be the "default" connection!
-      type: 'postgres',
-      host: 'localhost',
+      type: "postgres",
+      host: "localhost",
       port: 5436,
       username: 'user',
       password: 'password',
@@ -49,7 +49,7 @@ const secretEntities = [SecretEntity];
     }),
     // this also works with the ASYNC configuration!
     TypeOrmModule.forRootAsync({
-      name: SECRET_DB_CONNECTION, // you need to set the name here!
+      name: SECRET_DB_CONNECTION,   // you need to set the name here!
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService): TypeOrmModuleOptions => ({
@@ -99,17 +99,17 @@ export class SecretDTO {
 }
 ```
 
-Now lets register the `SecretEntity` with `NestjsQueryTypeOrmModule`.
+Now lets register the `SecretEntity` with `NestjsQueryTypeOrmModule`. 
 
 The only difference is you need to pass the name of the `Connection` when importing respective `TypeOrmModule`.
 
 ```ts title="secret/secret.module.ts"
 import { Module } from '@nestjs/common';
 import { NestjsQueryGraphQLModule } from '@codeshine/nestjs-query-graphql';
-import { NestjsQueryTypeOrmModule } from '@codeshine/nestjs-query-typeorm';
+import { NestjsQueryTypeOrmModule } from '@codeshine/nestjs-query-typeorm'; 
 import { SECRET_DB_CONNECTION } from '../constants';
 import { SecretEntity } from './secret.entity';
-import { SecretDTO } from './secret.dto';
+import { SecretDTO } from './secret.dto'
 
 @Module({
   imports: [
@@ -118,14 +118,15 @@ import { SecretDTO } from './secret.dto';
       // and provide a QueryService
       imports: [
         NestjsQueryTypeOrmModule.forFeature(
-          [SecretEntity],
+          [SecretEntity], 
           SECRET_DB_CONNECTION, // specify the connection name
-        ),
+        )
       ],
       // describe the resolvers you want to expose
       resolvers: [{ DTOClass: SecretDTO, EntityClass: SecretEntity }],
     }),
-  ],
+    
+  ],  
 })
 export class SecretModule {}
 ```
@@ -146,7 +147,9 @@ import { SecretEntity } from './secret.entity';
 
 @QueryService(SecretEntity)
 export class SecretService extends TypeOrmQueryService<SecretEntity> {
-  constructor(@InjectRepository(SecretEntity, SECRET_DB_CONNECTION) repository: Repository<SecretEntity>) {
+  constructor(
+    @InjectRepository(SecretEntity, SECRET_DB_CONNECTION) repository: Repository<SecretEntity>,
+  ) {
     super(repository);
   }
 }
@@ -154,4 +157,4 @@ export class SecretService extends TypeOrmQueryService<SecretEntity> {
 
 For the sake of brevity, the `AssemblerService` is not covered here, as it should not directly interact with the database itself. Therefore, no further adaptations are required. This also applies to the `Resolver`!
 
-For a full example see the [examples](https://github.com/doug-martin/nestjs-query/tree/master/examples/typeorm-multidb).
+For a full example see the [examples](https://github.com/tripss/nestjs-query/tree/master/examples/typeorm-multidb).

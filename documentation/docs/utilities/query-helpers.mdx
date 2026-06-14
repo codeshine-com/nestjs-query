@@ -11,15 +11,15 @@ All examples will be based on the following DTO definition.
 
 ```ts
 interface TestDTO {
-  first?: string | null;
+  first?: string | null
 
-  last?: string | null;
+  last?: string | null
 
-  age?: number | null;
+  age?: number | null
 
-  isVerified?: boolean | null;
+  isVerified?: boolean | null
 
-  created?: Date | null;
+  created?: Date | null
 }
 ```
 
@@ -252,10 +252,10 @@ const transformed = transformSort(dtoSort, fieldMap);
 ```
 
 ```ts
-[
+;[
   { field: 'firstName', direction: SortDirection.DESC },
-  { field: 'lastName', direction: SortDirection.ASC },
-];
+  { field: 'lastName', direction: SortDirection.ASC }
+]
 ```
 
 ## transformQuery
@@ -337,7 +337,7 @@ const comparisons = getFilterComparisons(filter, 'title');
 The resulting array would be
 
 ```ts
-[{ like: '%bar' }, { eq: 'foobar' }];
+;[{ like: '%bar' }, { eq: 'foobar' }]
 ```
 
 ## getFilterOmitting

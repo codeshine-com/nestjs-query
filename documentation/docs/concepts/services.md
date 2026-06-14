@@ -4,81 +4,52 @@ title: QueryService
 
 The `core` package defines a `QueryService` which is used to query and modify records.
 
-## Methods
-
+## Methods 
 The following methods are defined on the `QueryService`
 
 ### `query`
-
 Query for multiple records, with a filter, paging and sorting.
 
 #### Arguments
-
-- `query: Query<DTO>` - The query to filter, page, and sort results.
-
-#### Returns
-
-An array of DTOs
+* `query: Query<DTO>` - The query to filter, page, and sort results.
+#### Returns 
+An array of DTOs 
 
 ### `findById`
-
 Find a record by its id.
 
 #### Arguments
-
-- `id: string | number` - The id of the record to find
-
+* `id: string | number` - The id of the record to find
 #### Returns
-
 The DTO or undefined
 
 ### `getById`
-
-- get a record by its id or return a rejected promise with a NotFound error.
-
+  * get a record by its id or return a rejected promise with a NotFound error.
 #### Arguments
-
-- `id: string | number` - The id of the record to find
-
+* `id: string | number` - The id of the record to find
 #### Returns
-
 The DTO or a NotFoundException.
 
 ### `createMany`
-
 Create multiple records.
-
 #### Arguments
-
-- `items: DeepPartial<DTO>[]` - An array of partial DTOs to persist
-
-#### Returns
-
+* `items: DeepPartial<DTO>[]` - An array of partial DTOs to persist
+#### Returns 
 The saved DTOs.
-
+  
 ### `createOne`
-
 Create a single DTO.
-
 #### Arguments
-
-- `item: DeepPartial<DTO>` - A partial of the DTO to persist
-
-#### Returns
-
+* `item: DeepPartial<DTO>` - A partial of the DTO to persist
+#### Returns 
 The saved DTO
 
 ### `updateMany`
-
 Update multiple records based on a filter.
-
 #### Arguments
-
-- `update: DeepPartial<DTO>` - The update to apply
-- `filter: Filter<DTO>` - A `Filter` used to find the records to update
-
+* `update: DeepPartial<DTO>` - The update to apply
+* `filter: Filter<DTO>` - A `Filter` used to find the records to update
 #### Returns
-
 An object with the `updatedCount`
 
 :::note
@@ -86,29 +57,19 @@ UpdatedCount may be 0 if the database does not return the number of rows updated
 :::
 
 ### `updateOne`
-
 Update a single record.
-
 #### Arguments
-
-- `id: string | number` - The id of the record to update
-- `update: DeepPartial<DTO>` - The update to apply
-
+* `id: string | number` - The id of the record to update
+* `update: DeepPartial<DTO>` - The update to apply
 #### Returns
-
 The updated DTO
 
 ### `deleteMany`
-
 Delete multiple records.
-
 #### Arguments
-
-- `filter: Filter<DTO>` - The filter to find the records to delete.
-
+* `filter: Filter<DTO>` - The filter to find the records to delete.
 #### Returns
-
-An object with a `deletedCount` field.
+An object with a `deletedCount` field. 
 
 :::note
 `deletedCount` may be 0 if the database does not return the number of rows deleted.
@@ -117,25 +78,17 @@ An object with a `deletedCount` field.
 :::
 
 ### `deleteOne`
-
 Delete a single record.
-
 #### Arguments
-
-- `id: number | string`
-
+* `id: number | string`
 #### Returns
-
 `Promise<DTO>`
 
 ### `aggregate`
-
 Performs an aggregate query, supported aggregate functions are `groupBy`, `count`, `sum`, `avg`, `min`, and `max`
-
 #### Arguments
-
-- `filter: Filter<DTO>` - Additional filter to apply
-- `aggregate: AggregateQuery<DTO>` - The aggregate query
+* `filter: Filter<DTO>` - Additional filter to apply
+* `aggregate: AggregateQuery<DTO>` - The aggregate query
 
 Example `AggregateQuery`
 
@@ -150,7 +103,6 @@ Example `AggregateQuery`
 ```
 
 #### Returns
-
 An array of aggregate responses.
 
 Example `AggregateResponse`
@@ -161,162 +113,116 @@ Example `AggregateResponse`
     count: { id: 5 },
     sum: { id: 10 },
     avg: { id: 2.5 },
-    min: { id: 1, title: 'A Title' },
-    max: { id: 4, title: 'Z Title' },
-  },
-];
+    min: {id: 1, title: 'A Title'},
+    max: {id: 4, title: 'Z Title'}
+  }
+]
 ```
 
 ### `count`
-
 Count the number of records that match the `filter`
-
 #### Arguments
-
-- `filter: Filter<DTO>` - The filter a count records by
-
+* `filter: Filter<DTO>` - The filter a count records by
 #### Returns
-
 A count of records that match the `filter`
 
 ### `queryRelations`
-
-Query for relations
-
+Query for relations 
 #### Arguments
-
-- `RelationClass: Class<Relation>` - The `Class` type of the relation
-- `relationName: string` - The name of the relation
-- `dto: DTO | DTO[]` - The dto(s) to find the relations for.
-- `query: Query<Relation>` - Additional query to use when querying for relations.
-
+* `RelationClass: Class<Relation>` - The `Class` type of the relation
+* `relationName: string` - The name of the relation
+* `dto: DTO | DTO[]` - The dto(s) to find the relations for.
+* `query: Query<Relation>` - Additional query to use when querying for relations.
 #### Returns
-
-If querying for relations for a single `DTO` an array of relations will be returned.
+If querying for relations for a single `DTO` an array of relations will be returned. 
 If querying for relations for multiple `DTOs` a map where the key is the `DTO` and the value is the relations for the `DTO`.
+
 
 ### `aggregateRelations`
 
 Performs an aggregate query for the relations of a `DTO`.
 
 #### Arguments
-
-- `RelationClass: Class<Relation>` - The `Class` type of the relation
-- `relationName: string` - The name of the relation
-- `dto: DTO | DTO[]` - The dto(s) to aggregate the relations for.
-- `filter: Filter<Relation>` - A `filter` to apply when aggregating relations
-- `aggregate: AggregateQuery<Relation>` - The `aggregateQuery` for the relations
-
-#### Returns
-
-If aggregating relations for a single `DTO` an `AggregateResponse` for the dtos relations will be returned
+* `RelationClass: Class<Relation>` - The `Class` type of the relation
+* `relationName: string` - The name of the relation
+* `dto: DTO | DTO[]` - The dto(s) to aggregate the relations for.
+* `filter: Filter<Relation>` - A `filter` to apply when aggregating relations
+* `aggregate: AggregateQuery<Relation>` - The `aggregateQuery` for the relations
+#### Returns 
+If aggregating relations for a single `DTO` an `AggregateResponse` for the dtos relations will be returned 
 If aggregating relations for multiple `DTOs` a map where the key is the `DTO` and the value is the `AggregateResponse` for the dtos relations.
 
 ### `countRelations`
-
 Counts the number of relations.
-
 #### Arguments
-
-- `RelationClass: Class<Relation>` - The `Class` type of the relation
-- `relationName: string` - The name of the relation
-- `dto: DTO | DTO[]` - The dto(s) to count the relations for.
-- `filter: Filter<Relation>`- A `filter` to apply when counting relations
-
+* `RelationClass: Class<Relation>` - The `Class` type of the relation
+* `relationName: string` - The name of the relation
+* `dto: DTO | DTO[]` - The dto(s) to count the relations for.
+* `filter: Filter<Relation>`- A `filter` to apply when counting relations
 #### Returns
-
-If counting relations for a single `DTO` the relation count will be returned
+If counting relations for a single `DTO` the relation count will be returned 
 If counting relations for multiple `DTOs` a map where the key is the `DTO` and the value is relation count for the dtos relations.
 
+
 ### `findRelation`
-
 Find a single relation for the `DTO`(s).
-
 #### Arguments
-
-- `RelationClass: Class<Relation>` - The `Class` type of the relation
-- `relationName: string` - The name of the relation
-- `dto: DTO | DTO[]` - The dto(s) to find the relation for.
-- `opts?: FindRelationOptions<Relation>` - Additional options to find a relation by.
-
+* `RelationClass: Class<Relation>` - The `Class` type of the relation
+* `relationName: string` - The name of the relation
+* `dto: DTO | DTO[]` - The dto(s) to find the relation for.
+* `opts?: FindRelationOptions<Relation>` - Additional options to find a relation by.
 #### Returns
-
-If finding a relation for a single `DTO` the relation or undefineding returned
+If finding a relation for a single `DTO` the relation or undefineding returned 
 If finding a relation for multiple `DTOs` a map where the key is the `DTO` and the value is the relation or undefined.
 
 ### `addRelations`
-
 Adds relations to a `DTO`
-
 #### Arguments
-
-- `relationName: string` - The name of the relation
-- `id: string | number` - The id of the DTO to add the relations to
-- `relationIds: (string | number)[]` - The ids of the relations to add
-- `opts?: ModifyRelationOptions<DTO, Relation>` - Additional options apply when adding relations
-
+* `relationName: string` - The name of the relation
+* `id: string | number` - The id of the DTO to add the relations to
+* `relationIds: (string | number)[]` - The ids of the relations to add
+* `opts?: ModifyRelationOptions<DTO, Relation>` - Additional options apply when adding relations
 #### Returns
-
 The DTO the relations were added to.
 
 ### `setRelations`
-
 Sets relations on a `DTO`
-
 #### Arguments
-
-- `relationName: string` - The name of the relation
-- `id: string | number` - The id of the DTO to add the relations to
-- `relationIds: (string | number)[]` - The ids of the relations to set. If the relationIds is empty the all relations will be removed.
-- `opts?: ModifyRelationOptions<DTO, Relation>` - Additional options apply when adding relations
-
+* `relationName: string` - The name of the relation
+* `id: string | number` - The id of the DTO to add the relations to
+* `relationIds: (string | number)[]` - The ids of the relations to set. If the relationIds is empty the all relations will be removed.
+* `opts?: ModifyRelationOptions<DTO, Relation>` - Additional options apply when adding relations
 #### Returns
-
 The DTO the relations were added to.
 
 ### `setRelation`
-
 Set a relation on a DTO
-
 #### Arguments
-
-- `relationName: string` - The name of the relation
-- `id: string | number` - The id of the DTO to add the relations to
-- `relationId: string | number` - The id of the relation to set on the DTO
-- `opts?: ModifyRelationOptions<DTO, Relation>` - Additional options apply when setting the relation
-
-#### Returns
-
+* `relationName: string` - The name of the relation
+* `id: string | number` - The id of the DTO to add the relations to
+* `relationId: string | number` - The id of the relation to set on the DTO
+* `opts?: ModifyRelationOptions<DTO, Relation>` - Additional options apply when setting the relation
+#### Returns 
 The DTO the relation was set on.
 
 ### `removeRelations`
-
 Removes multiple relations from a DTO
-
 #### Arguments
-
-- `relationName: string` - The name of the relation
-- `id: string | number` - The id of the DTO to remove the relations from.
-- `relationIds: (string | number)[]` - The ids of the relations to remove
-- `opts?: ModifyRelationOptions<DTO, Relation>` - Additional options to apply when removing relations
-
+* `relationName: string` - The name of the relation
+* `id: string | number` - The id of the DTO to remove the relations from.
+* `relationIds: (string | number)[]` - The ids of the relations to remove
+* `opts?: ModifyRelationOptions<DTO, Relation>` - Additional options to apply when removing relations
 #### Returns
-
 The DTO the relations were removed from
 
 ### `removeRelation`
-
 Remove a relation from a DTO
-
 #### Arguments
-
-- `relationName: string` - The name of the relation
-- `id: string | number` - The id of the DTO to remove the relation from.
-- `relationId: string | number` - The id of the relation to remove
-- `opts?: ModifyRelationOptions<DTO, Relation>` - Additional options to apply when removing the relation.
-
+* `relationName: string` - The name of the relation
+* `id: string | number` - The id of the DTO to remove the relation from.
+* `relationId: string | number` - The id of the relation to remove
+* `opts?: ModifyRelationOptions<DTO, Relation>` - Additional options to apply when removing the relation.
 #### Returns
-
 The DTO the relation was removed from.
 
 ## Service Helpers
@@ -325,9 +231,10 @@ You can create your own service to use with the `CRUDResolver` as long as it imp
 
 There are a number of persistence `QueryServices` that are provided out of the box.
 
-- [@codeshine/nestjs-query-typeorm](../persistence/typeorm/getting-started.md)
-- [@codeshine/nestjs-query-sequelize](../persistence/sequelize/getting-started.md)
-- [@codeshine/nestjs-query-mongoose](../persistence/mongoose/getting-started.md)
+* [@codeshine/nestjs-query-typeorm](../persistence/typeorm/getting-started.md)
+* [@codeshine/nestjs-query-sequelize](../persistence/sequelize/getting-started.md)
+* [@codeshine/nestjs-query-mongoose](../persistence/mongoose/getting-started.md)
+
 
 In addition to the persistence `QueryServices` `@codeshine/nestjs-query-core` provides a few helper services that can be used for more complex use cases.
 
@@ -338,19 +245,17 @@ When designing the base services we have chosen composition over inheritance. Th
 The RelationQueryService was originally designed for [federation](../graphql/federation.mdx), but has proven itself useful in representing virtual relations. A virtual relation(s) is anything that can be queried through a query service.
 
 To create additional relations through a RelationQueryService you need to provide the following
-
-- A `QueryService` that can be used to fetch the relation
-- A `query` function that accepts the parent DTO to fetch the relation for and returns a `Query` to fetch the relations.
+* A `QueryService` that can be used to fetch the relation
+* A `query` function that accepts the parent DTO to fetch the relation for and returns a `Query` to fetch the relations.
 
 :::info
 Relations defined using the `RelationQueryService` are readonly!
 :::
 
 When a relation query method is called it will:
-
-- First check if the relation is a virtual relation, if `true` it will invoke the `query` option to generate a query that will be
-  passed to the `queryService` to fetch the relations.
-- If the relation is not a `virtual` relation it will proxy to the original query service to query for the relation.
+* First check if the relation is a virtual relation, if `true` it will invoke the `query` option to generate a query that will be
+passed to the `queryService` to fetch the relations.
+* If the relation is not a `virtual` relation it will proxy to the original query service to query for the relation.
 
 For example, we could wrap the `TodoItem` query service and add a `completedSubTasks` relation.
 
@@ -390,12 +295,8 @@ import { SubTaskDTO } from '../../sub-task/dto/sub-task.dto';
 
 @ObjectType('TodoItem')
 @KeySet(['id'])
-@FilterableConnection('subTasks', () => SubTaskDTO, { disableRemove: true })
-@FilterableConnection('completedSubTasks', () => SubTaskDTO, {
-  // disable remove and update because it is a virtual relation
-  disableRemove: true,
-  disableUpdate: true,
-})
+@FilterableConnection('subTasks', () => SubTaskDTO)
+@FilterableConnection('completedSubTasks', () => SubTaskDTO)
 export class TodoItemDTO {
   @IDField(() => ID)
   id!: number;
@@ -415,6 +316,7 @@ export class TodoItemDTO {
   @FilterableField(() => GraphQLISODateTime)
   updated!: Date;
 }
+
 ```
 
 Next we need to export the `SubTask` query service from the `SubTaskModule` so we can resolve it in the
@@ -483,15 +385,16 @@ import { SubTaskModule } from '../sub-task/sub-task.module';
   ],
 })
 export class TodoItemModule {}
+
 ```
 
-The `completedSubTasks` relation is now available in your graphql schema.
+The `completedSubTasks` relation is now available in your graphql schema.  
 
 ### ProxyQueryService
 
-The `ProxyQueryService` is a query service that delegates to another query service. The `ProxyQueryService` can be used when you want to override certain methods of a query service without extending it.
+The `ProxyQueryService` is a query service that delegates to another query service. The `ProxyQueryService` can be used when you want to override certain methods of a query service without extending it. 
 
-This class is used internally by the [RelationQueryService](#relation-query-service) to override the relation methods for a `QueryService`
+This class is used internally by the [RelationQueryService](#relationqueryservice) to override the relation methods for a `QueryService` 
 
 Lets use the `ProxyQueryService` to create a generic query service that will time and log a message everytime a `create`, `update`, or `delete` method is called.
 
@@ -551,7 +454,7 @@ export class MutationLoggerQueryService<DTO, C = DeepPartial<DTO>, U = DeepParti
     return result;
   }
 }
-```
+``` 
 
 We can now add timed logging to any query service.
 
@@ -569,7 +472,7 @@ export class TodoItemService extends MutationLoggerQueryService<TodoItemEntity> 
     super(TodoItemService.name, service);
   }
 }
-```
+```  
 
 Don't forget to use your custom query service in your module
 
@@ -596,15 +499,16 @@ import { TodoItemService } from './todo-item.service';
   ],
 })
 export class TodoItemModule {}
+
 ```
 
 ### NoOpQueryService
 
 The no-op query service is one that will throw a `NotImplementedException` for every method.
 
-This is commonly used during testing when you want to mock out a service.
+This is commonly used during testing when you want to mock out a service.  
 
-You can also use the `NoOpQueryService` as a base a new query service that only supports a subset of operations.
+You can also use the `NoOpQueryService` as a base a new query service that only supports a subset of operations. 
 
 In this example we'll create a simple query service that stores elements in an array but does not support relations or aggregations.
 
@@ -694,4 +598,6 @@ export class TodoItemService extends NoOpQueryService<TodoItemEntity> {
     return found.length;
   }
 }
+
 ```
+

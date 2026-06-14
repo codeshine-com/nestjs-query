@@ -1,22 +1,26 @@
-import { Module } from '@nestjs/common';
-import { GraphQLModule } from '@nestjs/graphql';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { ComplexityPlugin } from './complexity.plugin';
-import { TagModule } from './tag/tag.module';
-import { TodoItemModule } from './todo-item/todo-item.module';
-import { SubTaskModule } from './sub-task/sub-task.module';
-import { typeormOrmConfig } from '../../helpers';
+import { ApolloDriver } from '@nestjs/apollo'
+import { Module } from '@nestjs/common'
+import { GraphQLModule } from '@nestjs/graphql'
+import { TypeOrmModule } from '@nestjs/typeorm'
+
+import { formatGraphqlError, typeormOrmConfig } from '../../helpers'
+import { ComplexityPlugin } from './complexity.plugin'
+import { SubTaskModule } from './sub-task/sub-task.module'
+import { TagModule } from './tag/tag.module'
+import { TodoItemModule } from './todo-item/todo-item.module'
 
 @Module({
   providers: [ComplexityPlugin],
   imports: [
     TypeOrmModule.forRoot(typeormOrmConfig('complexity')),
     GraphQLModule.forRoot({
-      autoSchemaFile: 'schema.gql',
+      driver: ApolloDriver,
+      autoSchemaFile: 'examples/complexity/schema.gql',
+      formatError: formatGraphqlError
     }),
     SubTaskModule,
     TodoItemModule,
-    TagModule,
-  ],
+    TagModule
+  ]
 })
 export class AppModule {}

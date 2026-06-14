@@ -1,22 +1,12 @@
-import {
-  Filter,
-  InjectAssemblerQueryService,
-  mergeFilter,
-  mergeQuery,
-  QueryService,
-} from '@codeshine/nestjs-query-core';
-import {
-  AuthorizerInterceptor,
-  AuthorizerFilter,
-  ConnectionType,
-  OperationGroup,
-} from '@codeshine/nestjs-query-graphql';
-import { Args, Query, Resolver } from '@nestjs/graphql';
-import { UseGuards, UseInterceptors } from '@nestjs/common';
-import { TodoItemDTO } from './dto/todo-item.dto';
-import { TodoItemAssembler } from './todo-item.assembler';
-import { TodoItemConnection, TodoItemQuery } from './types';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { UseGuards, UseInterceptors } from '@nestjs/common'
+import { Args, Query, Resolver } from '@nestjs/graphql'
+import { Filter, InjectAssemblerQueryService, mergeFilter, mergeQuery, QueryService } from '@codeshine/nestjs-query-core'
+import { AuthorizerFilter, AuthorizerInterceptor, ConnectionType, OperationGroup } from '@codeshine/nestjs-query-graphql'
+
+import { JwtAuthGuard } from '../auth/jwt-auth.guard'
+import { TodoItemDTO } from './dto/todo-item.dto'
+import { TodoItemAssembler } from './todo-item.assembler'
+import { TodoItemConnection, TodoItemQuery } from './types'
 
 @Resolver(() => TodoItemDTO)
 @UseGuards(JwtAuthGuard)
@@ -30,18 +20,18 @@ export class TodoItemResolver {
     @Args() query: TodoItemQuery,
     @AuthorizerFilter({
       operationGroup: OperationGroup.READ,
-      many: true,
+      many: true
     })
-    authFilter: Filter<TodoItemDTO>,
+    authFilter: Filter<TodoItemDTO>
   ): Promise<ConnectionType<TodoItemDTO>> {
     // add the completed filter the user provided filter
-    const filter: Filter<TodoItemDTO> = mergeFilter(query.filter ?? {}, { completed: { is: true } });
-    const completedQuery = mergeQuery(query, { filter: mergeFilter(filter, authFilter) });
+    const filter: Filter<TodoItemDTO> = mergeFilter(query.filter ?? {}, { completed: { is: true } })
+    const completedQuery = mergeQuery(query, { filter: mergeFilter(filter, authFilter) })
     return TodoItemConnection.createFromPromise(
       (q) => this.service.query(q),
       completedQuery,
-      (q) => this.service.count(q),
-    );
+      (q) => this.service.count(q)
+    )
   }
 
   // Set the return type to the TodoItemConnection
@@ -52,33 +42,33 @@ export class TodoItemResolver {
       operationName: 'queryUncompletedTodoItems',
       operationGroup: OperationGroup.READ,
       readonly: true,
-      many: true,
+      many: true
     })
-    authFilter: Filter<TodoItemDTO>,
+    authFilter: Filter<TodoItemDTO>
   ): Promise<ConnectionType<TodoItemDTO>> {
     // add the completed filter the user provided filter
-    const filter: Filter<TodoItemDTO> = mergeFilter(query.filter ?? {}, { completed: { is: false } });
-    const uncompletedQuery = mergeQuery(query, { filter: mergeFilter(filter, authFilter) });
+    const filter: Filter<TodoItemDTO> = mergeFilter(query.filter ?? {}, { completed: { is: false } })
+    const uncompletedQuery = mergeQuery(query, { filter: mergeFilter(filter, authFilter) })
     return TodoItemConnection.createFromPromise(
       (q) => this.service.query(q),
       uncompletedQuery,
-      (q) => this.service.count(q),
-    );
+      (q) => this.service.count(q)
+    )
   }
 
   @Query(() => TodoItemConnection)
   async failingTodoItems(
     @Args() query: TodoItemQuery,
     @AuthorizerFilter() // Intentionally left out argument to test error
-    authFilter: Filter<TodoItemDTO>,
+    authFilter: Filter<TodoItemDTO>
   ): Promise<ConnectionType<TodoItemDTO>> {
     // add the completed filter the user provided filter
-    const filter: Filter<TodoItemDTO> = mergeFilter(query.filter ?? {}, { completed: { is: false } });
-    const uncompletedQuery = mergeQuery(query, { filter: mergeFilter(filter, authFilter) });
+    const filter: Filter<TodoItemDTO> = mergeFilter(query.filter ?? {}, { completed: { is: false } })
+    const uncompletedQuery = mergeQuery(query, { filter: mergeFilter(filter, authFilter) })
     return TodoItemConnection.createFromPromise(
       (q) => this.service.query(q),
       uncompletedQuery,
-      (q) => this.service.count(q),
-    );
+      (q) => this.service.count(q)
+    )
   }
 }

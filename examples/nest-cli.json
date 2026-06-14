@@ -2,6 +2,15 @@
   "collection": "@nestjs/schematics",
   "monorepo": true,
   "projects": {
+    "all-paging": {
+      "type": "application",
+      "root": "all-paging",
+      "entryFile": "main",
+      "sourceRoot": "all-paging/src",
+      "compilerOptions": {
+        "tsConfigPath": "./tsconfig.json"
+      }
+    },
     "auth": {
       "type": "application",
       "root": "auth",
@@ -92,6 +101,15 @@
         "tsConfigPath": "./tsconfig.json"
       }
     },
+    "fetch-all-with-negative": {
+      "type": "application",
+      "root": "fetch-all-with-negative",
+      "entryFile": "main",
+      "sourceRoot": "fetch-all-with-negative/src",
+      "compilerOptions": {
+        "tsConfigPath": "./tsconfig.json"
+      }
+    },
     "hooks": {
       "type": "application",
       "root": "hooks",
@@ -151,6 +169,15 @@
       "root": "typegoose",
       "entryFile": "main",
       "sourceRoot": "typegoose/src",
+      "compilerOptions": {
+        "tsConfigPath": "./tsconfig.json"
+      }
+    },
+    "typegoose-discriminators": {
+      "type": "application",
+      "root": "typegoose-discriminators",
+      "entryFile": "main",
+      "sourceRoot": "typegoose-discriminators/src",
       "compilerOptions": {
         "tsConfigPath": "./tsconfig.json"
       }

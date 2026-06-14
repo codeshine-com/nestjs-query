@@ -1,60 +1,66 @@
 /* eslint-disable no-param-reassign */
+import { GraphQLISODateTime, ID, ObjectType } from '@nestjs/graphql'
 import {
-  FilterableField,
-  BeforeCreateOne,
-  CreateOneInputType,
   BeforeCreateMany,
-  CreateManyInputType,
-  BeforeUpdateOne,
-  UpdateOneInputType,
+  BeforeCreateOne,
   BeforeUpdateMany,
-  UpdateManyInputType,
-  KeySet,
+  BeforeUpdateOne,
+  CreateManyInputType,
+  CreateOneInputType,
   CursorConnection,
+  FilterableField,
+  KeySet,
+  ObjectId,
   QueryOptions,
-} from '@codeshine/nestjs-query-graphql';
-import { ObjectType, ID, GraphQLISODateTime } from '@nestjs/graphql';
-import { TodoItemDTO } from '../../todo-item/dto/todo-item.dto';
-import { GqlContext } from '../../auth.guard';
-import { getUserName } from '../../helpers';
+  UpdateManyInputType,
+  UpdateOneInputType
+} from '@codeshine/nestjs-query-graphql'
+import mongoose from 'mongoose'
+
+import { GqlContext } from '../../auth.guard'
+import { getUserName } from '../../helpers'
+import { TodoItemDTO } from '../../todo-item/dto/todo-item.dto'
 
 @ObjectType('Tag')
 @KeySet(['id'])
 @QueryOptions({ enableTotalCount: true })
-@CursorConnection('todoItems', () => TodoItemDTO, { disableUpdate: true, disableRemove: true })
+@CursorConnection('todoItems', () => TodoItemDTO)
 @BeforeCreateOne((input: CreateOneInputType<TagDTO>, context: GqlContext) => {
-  input.input.createdBy = getUserName(context);
-  return input;
+  input.input.createdBy = getUserName(context)
+  return input
 })
 @BeforeCreateMany((input: CreateManyInputType<TagDTO>, context: GqlContext) => {
-  const createdBy = getUserName(context);
-  input.input = input.input.map((c) => ({ ...c, createdBy }));
-  return input;
+  const createdBy = getUserName(context)
+  input.input = input.input.map((c) => ({ ...c, createdBy }))
+  return input
 })
 @BeforeUpdateOne((input: UpdateOneInputType<TagDTO>, context: GqlContext) => {
-  input.update.updatedBy = getUserName(context);
-  return input;
+  input.update.updatedBy = getUserName(context)
+  return input
 })
 @BeforeUpdateMany((input: UpdateManyInputType<TagDTO, TagDTO>, context: GqlContext) => {
-  input.update.updatedBy = getUserName(context);
-  return input;
+  input.update.updatedBy = getUserName(context)
+  return input
 })
 export class TagDTO {
+  @ObjectId()
+  _id: mongoose.Types.ObjectId
+
   @FilterableField(() => ID)
-  id!: string;
+  id!: string
 
   @FilterableField()
-  name!: string;
+  name!: string
 
   @FilterableField(() => GraphQLISODateTime)
-  createdAt!: Date;
+  createdAt!: Date
 
   @FilterableField(() => GraphQLISODateTime)
-  updatedAt!: Date;
+  updatedAt!: Date
 
   @FilterableField({ nullable: true })
-  createdBy?: string;
+  createdBy?: string
 
   @FilterableField({ nullable: true })
-  updatedBy?: string;
+  updatedBy?: string
 }

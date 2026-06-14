@@ -1,4 +1,4 @@
-import { FilterFieldComparison } from './filter-field-comparison.interface';
+import { FilterFieldComparison } from './filter-field-comparison.interface'
 
 /**
  * A comparison for fields in T.
@@ -20,8 +20,8 @@ import { FilterFieldComparison } from './filter-field-comparison.interface';
  * @typeparam T - the type of object to filter on.
  */
 export type FilterComparisons<T> = {
-  [K in keyof T]?: FilterFieldComparison<T[K]>;
-};
+  [K in keyof T]?: FilterFieldComparison<T[K]>
+}
 
 /**
  * A grouping of filters that should be ANDed or ORed together.
@@ -57,20 +57,20 @@ type FilterGrouping<T> = {
   /**
    * Group an array of filters with an AND operation.
    */
-  and?: Filter<T>[];
+  and?: Filter<T>[]
   /**
    * Group an array of filters with an OR operation.
    */
-  or?: Filter<T>[];
+  or?: Filter<T>[]
   /**
    * Group filter with an EXISTS operation.
    */
-  exists?: Filter<T>;
+  exists?: Filter<T>
   /**
    * Group filter with an NOT EXISTS operation.
    */
-  notExists?: Filter<T>;
-};
+  notExists?: Filter<T>
+}
 
 /**
  * Filter for type T.
@@ -120,4 +120,4 @@ type FilterGrouping<T> = {
  *
  * @typeparam T - the type of object to filter on.
  */
-export type Filter<T> = FilterGrouping<T> & FilterComparisons<T>;
+export type Filter<T> = FilterGrouping<T> & FilterComparisons<T>

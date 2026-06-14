@@ -1,52 +1,57 @@
-import { Base } from '@typegoose/typegoose/lib/defaultClasses';
-import { Prop, modelOptions, Ref } from '@typegoose/typegoose';
-import { Types } from 'mongoose';
-import { SubTaskEntity } from '../sub-task/sub-task.entity';
-import { TagEntity } from '../tag/tag.entity';
+import { ObjectId } from '@codeshine/nestjs-query-graphql'
+import { modelOptions, Prop, Ref } from '@typegoose/typegoose'
+import { Base } from '@typegoose/typegoose/lib/defaultClasses'
+import { Types } from 'mongoose'
+
+import { SubTaskEntity } from '../sub-task/sub-task.entity'
+import { TagEntity } from '../tag/tag.entity'
 
 @modelOptions({
   schemaOptions: {
     timestamps: true,
     collection: 'todo-items',
-    toObject: { virtuals: true },
-  },
+    toObject: { virtuals: true }
+  }
 })
 export class TodoItemEntity implements Base {
-  _id!: Types.ObjectId;
+  @ObjectId()
+  _id!: Types.ObjectId
 
-  id!: string;
+  id!: string
 
   @Prop({ required: true })
-  title!: string;
+  title!: string
 
   @Prop()
-  description?: string;
+  description?: string
 
   @Prop({ required: true })
-  completed!: boolean;
+  completed!: boolean
 
   @Prop({ default: Date.now })
-  createdAt!: Date;
+  createdAt!: Date
 
   @Prop({ default: Date.now })
-  updatedAt!: Date;
+  updatedAt!: Date
 
+  @ObjectId()
   @Prop({ ref: () => TagEntity })
-  tags!: Ref<TagEntity>[];
+  tags!: Ref<TagEntity>[]
 
   @Prop({ default: 0 })
-  priority!: number;
+  priority!: number
 
   @Prop()
-  createdBy?: string;
+  createdBy?: string
 
   @Prop()
-  updatedBy?: string;
+  updatedBy?: string
 
+  // @ObjectId()
   @Prop({
     ref: 'SubTaskEntity',
     localField: '_id',
-    foreignField: 'todoItem',
+    foreignField: 'todoItem'
   })
-  subTasks?: Ref<SubTaskEntity>[];
+  subTasks?: Ref<SubTaskEntity>[]
 }

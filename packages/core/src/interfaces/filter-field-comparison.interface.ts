@@ -1,7 +1,7 @@
 /**
  * Field comparisons with a type of `boolean`.
  */
-import { Filter } from './filter.interface';
+import { Filter } from './filter.interface'
 
 export interface BooleanFieldComparisons {
   /**
@@ -18,7 +18,7 @@ export interface BooleanFieldComparisons {
    * { field: { is: null } }
    * ```
    */
-  is?: boolean | null;
+  is?: boolean | null
   /**
    * Is not operator.
    *
@@ -33,17 +33,17 @@ export interface BooleanFieldComparisons {
    * { field: { isNot: null } }
    * ```
    */
-  isNot?: boolean | null;
+  isNot?: boolean | null
 }
 
 export interface CommonFieldComparisonBetweenType<FieldType> {
-  lower: FieldType;
-  upper: FieldType;
+  lower: FieldType
+  upper: FieldType
 }
 
 export interface JsonFieldComparisonPathType {
-  path: string;
-  value: string;
+  path: string
+  value: string
 }
 
 /**
@@ -60,7 +60,7 @@ export interface CommonFieldComparisonType<FieldType> extends BooleanFieldCompar
    * { field: { eq: 'bar' } }
    * ```
    */
-  eq?: FieldType;
+  eq?: FieldType
   /**
    * Field in-equality.
    *
@@ -69,7 +69,7 @@ export interface CommonFieldComparisonType<FieldType> extends BooleanFieldCompar
    * { field: { neq: 'bar' } }
    * ```
    */
-  neq?: FieldType;
+  neq?: FieldType
   /**
    * Greater than comparison.
    *
@@ -78,7 +78,7 @@ export interface CommonFieldComparisonType<FieldType> extends BooleanFieldCompar
    * { field: { gt: 1 } }
    * ```
    */
-  gt?: FieldType;
+  gt?: FieldType
   /**
    * Greater than or equal to comparison.
    *
@@ -87,7 +87,7 @@ export interface CommonFieldComparisonType<FieldType> extends BooleanFieldCompar
    * { field: { gte: 1 } }
    * ```
    */
-  gte?: FieldType;
+  gte?: FieldType
   /**
    * Less than comparison.
    *
@@ -96,7 +96,7 @@ export interface CommonFieldComparisonType<FieldType> extends BooleanFieldCompar
    * { field: { lt: 1 } }
    * ```
    */
-  lt?: FieldType;
+  lt?: FieldType
   /**
    * Less than or equal to comparison.
    *
@@ -105,7 +105,7 @@ export interface CommonFieldComparisonType<FieldType> extends BooleanFieldCompar
    * { field: { lte: 1 } }
    * ```
    */
-  lte?: FieldType;
+  lte?: FieldType
   /**
    * Check that a field is included in an array of values.
    *
@@ -114,7 +114,7 @@ export interface CommonFieldComparisonType<FieldType> extends BooleanFieldCompar
    * { field: { in: ['a', 'b', 'c'] } }
    * ```
    */
-  in?: FieldType[];
+  in?: FieldType[]
   /**
    * Check that a field is not included in an array of values.
    *
@@ -123,7 +123,7 @@ export interface CommonFieldComparisonType<FieldType> extends BooleanFieldCompar
    * { field: { notIn: ['a', 'b', 'c'] } }
    * ```
    */
-  notIn?: FieldType[];
+  notIn?: FieldType[]
   /**
    * Checks that a field is between a lower and upper bound. The bounds are included!
    *
@@ -132,7 +132,7 @@ export interface CommonFieldComparisonType<FieldType> extends BooleanFieldCompar
    * { field: { between: { lower: 1, upper: 10 } } }
    * ```
    */
-  between?: CommonFieldComparisonBetweenType<FieldType>;
+  between?: CommonFieldComparisonBetweenType<FieldType>
   /**
    * Checks that a field is not between a lower and upper bound. The bounds are excluded!
    *
@@ -141,7 +141,7 @@ export interface CommonFieldComparisonType<FieldType> extends BooleanFieldCompar
    * { field: { notBetween: { lower: 1, upper: 10 } } }
    * ```
    */
-  notBetween?: CommonFieldComparisonBetweenType<FieldType>;
+  notBetween?: CommonFieldComparisonBetweenType<FieldType>
 }
 
 /**
@@ -156,7 +156,7 @@ export interface StringFieldComparisons extends CommonFieldComparisonType<string
    * { field: { like: 'Foo%' } }
    * ```
    */
-  like?: string;
+  like?: string
   /**
    * Not like comparison.
    *
@@ -165,7 +165,7 @@ export interface StringFieldComparisons extends CommonFieldComparisonType<string
    * { field: { notLike: 'Foo%' } }
    * ```
    */
-  notLike?: string;
+  notLike?: string
   /**
    * Case insensitive like comparison.
    *
@@ -174,7 +174,7 @@ export interface StringFieldComparisons extends CommonFieldComparisonType<string
    * { field: { iLike: 'Foo%' } }
    * ```
    */
-  iLike?: string;
+  iLike?: string
   /**
    * Case insensitive not like comparison.
    *
@@ -183,29 +183,14 @@ export interface StringFieldComparisons extends CommonFieldComparisonType<string
    * { field: { notILike: 'Foo%' } }
    * ```
    */
-  notILike?: string;
+  notILike?: string
 }
 
 export type JsonFieldComparisons = {
-  [Property in keyof Pick<
-    StringFieldComparisons,
-    'like'
-  > as `path${Capitalize<Property>}`]: JsonFieldComparisonPathType;
-};
+  [Property in keyof Pick<StringFieldComparisons, 'like'> as `path${Capitalize<Property>}`]: JsonFieldComparisonPathType
+}
 
-type BuiltInTypes =
-  | boolean
-  | boolean
-  | string
-  | string
-  | number
-  | Date
-  | RegExp
-  | bigint
-  | symbol
-  | null
-  | undefined
-  | never;
+type BuiltInTypes = boolean | string | number | Date | RegExp | bigint | symbol | null | undefined
 
 /**
  * Type for field comparisons.
@@ -218,16 +203,16 @@ type BuiltInTypes =
 type FilterFieldComparisonType<FieldType, IsKeys extends true | false> = FieldType extends string | String
   ? StringFieldComparisons // eslint-disable-next-line @typescript-eslint/ban-types
   : FieldType extends boolean | Boolean
-  ? BooleanFieldComparisons
-  : FieldType extends number | Date | RegExp | bigint | BuiltInTypes[] | symbol
-  ? CommonFieldComparisonType<FieldType>
-  : FieldType extends Array<infer U>
-  ? CommonFieldComparisonType<U> | Filter<U> // eslint-disable-next-line @typescript-eslint/ban-types
-  : FieldType extends Record<string, unknown>
-  ? JsonFieldComparisons
-  : IsKeys extends true
-  ? CommonFieldComparisonType<FieldType> & StringFieldComparisons & Filter<FieldType>
-  : CommonFieldComparisonType<FieldType> | Filter<FieldType>;
+    ? BooleanFieldComparisons
+    : FieldType extends number | Date | RegExp | bigint | BuiltInTypes[] | symbol
+      ? CommonFieldComparisonType<FieldType>
+      : FieldType extends Array<infer U>
+        ? CommonFieldComparisonType<U> | Filter<U> // eslint-disable-next-line @typescript-eslint/ban-types
+        : FieldType extends Record<string, unknown>
+          ? JsonFieldComparisons
+          : IsKeys extends true
+            ? CommonFieldComparisonType<FieldType> & StringFieldComparisons & Filter<FieldType>
+            : CommonFieldComparisonType<FieldType> | Filter<FieldType>
 
 /**
  * Type for field comparisons.
@@ -237,11 +222,11 @@ type FilterFieldComparisonType<FieldType, IsKeys extends true | false> = FieldTy
  * * all other types use [[CommonFieldComparisonType]]
  */
 // eslint-disable-next-line @typescript-eslint/ban-types
-export type FilterFieldComparison<FieldType> = FilterFieldComparisonType<FieldType, false>;
+export type FilterFieldComparison<FieldType> = FilterFieldComparisonType<FieldType, false>
 
 /**
  * Type for all comparison operators for a field type.
  *
  * @typeparam FieldType - The TS type of the field.
  */
-export type FilterComparisonOperators<FieldType> = keyof FilterFieldComparisonType<FieldType, true>;
+export type FilterComparisonOperators<FieldType> = keyof FilterFieldComparisonType<FieldType, true>

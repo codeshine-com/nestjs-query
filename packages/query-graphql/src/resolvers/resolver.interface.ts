@@ -1,64 +1,63 @@
-import { QueryService } from '@codeshine/nestjs-query-core';
-import { DTONamesOpts } from '../common';
-import { ResolverMethodOpts, SubscriptionResolverMethodOpts } from '../decorators';
-import { GraphQLPubSub } from '../subscription';
-import { PagingStrategies, QueryArgsTypeOpts } from '../types';
+import { QueryService } from '@codeshine/nestjs-query-core'
 
-type NamedEndpoint = {
+import { DTONamesOpts } from '../common'
+import { QueryResolverMethodOpts, SubscriptionResolverMethodOpts } from '../decorators'
+import { GraphQLPubSub } from '../subscription'
+import { PagingStrategies, QueryArgsTypeOpts } from '../types'
+
+export type NamedEndpoint = {
   /** Specify to override the name of the graphql query or mutation * */
-  name?: string;
-};
+  name?: string
+  /** Specify a description for the graphql query or mutation* */
+  description?: string
+}
 
-export interface ResolverOpts extends ResolverMethodOpts, DTONamesOpts {
+export interface ResolverOpts extends QueryResolverMethodOpts, DTONamesOpts {
   /**
    * Options for single record graphql endpoints
    */
-  one?: ResolverMethodOpts & NamedEndpoint;
+  one?: QueryResolverMethodOpts & NamedEndpoint
   /**
    * Options for multiple record graphql endpoints
    */
-  many?: ResolverMethodOpts & NamedEndpoint;
+  many?: QueryResolverMethodOpts & NamedEndpoint
 }
 
 export interface SubscriptionResolverOpts extends SubscriptionResolverMethodOpts, DTONamesOpts {
-  one?: SubscriptionResolverMethodOpts & NamedEndpoint;
-  many?: SubscriptionResolverMethodOpts & NamedEndpoint;
+  one?: SubscriptionResolverMethodOpts & NamedEndpoint
+  many?: SubscriptionResolverMethodOpts & NamedEndpoint
 }
 
 /** @internal */
 export interface ServiceResolver<DTO, QS extends QueryService<DTO, unknown, unknown>> {
-  service: QS;
-  readonly pubSub?: GraphQLPubSub;
+  service: QS
+  readonly pubSub?: GraphQLPubSub
 }
 
 /** @internal */
-export interface ResolverClass<
-  DTO,
-  QS extends QueryService<DTO, unknown, unknown>,
-  Resolver extends ServiceResolver<DTO, QS>,
-> {
-  new (service: QS): Resolver;
+export interface ResolverClass<DTO, QS extends QueryService<DTO, unknown, unknown>, Resolver extends ServiceResolver<DTO, QS>> {
+  new (service: QS): Resolver
 }
 
 /**
  * @internal
  * Base Resolver that takes in a service as a constructor argument.
  */
-export class BaseServiceResolver<DTO, QS extends QueryService<DTO, unknown, unknown>> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export class BaseServiceResolver<DTO, QS> {
   constructor(readonly service: QS) {}
 }
 
-export type ExtractPagingStrategy<
-  DTO,
-  Opts extends QueryArgsTypeOpts<DTO>,
-> = Opts['pagingStrategy'] extends PagingStrategies ? Opts['pagingStrategy'] : PagingStrategies.CURSOR;
+export type ExtractPagingStrategy<DTO, Opts extends QueryArgsTypeOpts<DTO>> = Opts['pagingStrategy'] extends PagingStrategies
+  ? Opts['pagingStrategy']
+  : PagingStrategies.CURSOR
 
 export type MergePagingStrategyOpts<
   DTO,
   Opts extends QueryArgsTypeOpts<DTO>,
-  S extends PagingStrategies,
+  S extends PagingStrategies
 > = Opts['pagingStrategy'] extends PagingStrategies
   ? Opts
   : S extends PagingStrategies
-  ? Omit<Opts, 'pagingStrategy'> & { pagingStrategy: S }
-  : Opts;
+    ? Omit<Opts, 'pagingStrategy'> & { pagingStrategy: S }
+    : Opts

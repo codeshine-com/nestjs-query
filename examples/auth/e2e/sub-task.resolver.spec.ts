@@ -1,46 +1,47 @@
-import { AggregateResponse } from '@codeshine/nestjs-query-core';
-import { CursorConnectionType } from '@codeshine/nestjs-query-graphql';
-import { Test } from '@nestjs/testing';
-import request from 'supertest';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { Connection } from 'typeorm';
-import { AppModule } from '../src/app.module';
-import { SubTaskDTO } from '../src/sub-task/dto/sub-task.dto';
-import { TodoItemDTO } from '../src/todo-item/dto/todo-item.dto';
-import { refresh } from './fixtures';
-import { edgeNodes, pageInfoField, subTaskAggregateFields, subTaskFields, todoItemFields } from './graphql-fragments';
-import { AuthService } from '../src/auth/auth.service';
+import { INestApplication, ValidationPipe } from '@nestjs/common'
+import { Test } from '@nestjs/testing'
+import { AggregateResponse } from '@codeshine/nestjs-query-core'
+import { CursorConnectionType } from '@codeshine/nestjs-query-graphql'
+import request from 'supertest'
+import { DataSource } from 'typeorm'
+
+import { AppModule } from '../src/app.module'
+import { AuthService } from '../src/auth/auth.service'
+import { SubTaskDTO } from '../src/sub-task/dto/sub-task.dto'
+import { TodoItemDTO } from '../src/todo-item/dto/todo-item.dto'
+import { refresh } from './fixtures'
+import { edgeNodes, pageInfoField, subTaskAggregateFields, subTaskFields, todoItemFields } from './graphql-fragments'
 
 describe('SubTaskResolver (auth - e2e)', () => {
-  let app: INestApplication;
-  let jwtToken: string;
+  let app: INestApplication
+  let jwtToken: string
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
+      imports: [AppModule]
+    }).compile()
 
-    app = moduleRef.createNestApplication();
+    app = moduleRef.createNestApplication()
     app.useGlobalPipes(
       new ValidationPipe({
         transform: true,
         whitelist: true,
         forbidNonWhitelisted: true,
         skipMissingProperties: false,
-        forbidUnknownValues: true,
-      }),
-    );
+        forbidUnknownValues: true
+      })
+    )
 
-    await app.init();
-    await refresh(app.get(Connection));
-  });
+    await app.init()
+    await refresh(app.get(DataSource))
+  })
 
-  afterAll(() => refresh(app.get(Connection)));
+  afterAll(() => refresh(app.get(DataSource)))
 
   beforeEach(async () => {
-    const authService = app.get(AuthService);
-    jwtToken = (await authService.login({ username: 'nestjs-query', id: 1 })).accessToken;
-  });
+    const authService = app.get(AuthService)
+    jwtToken = (await authService.login({ username: 'nestjs-query', id: 1 })).accessToken
+  })
 
   const subTasks = [
     { id: '1', title: 'Create Nest App - Sub Task 1', completed: true, description: null, todoItemId: '1' },
@@ -54,65 +55,65 @@ describe('SubTaskResolver (auth - e2e)', () => {
       title: 'Create Entity Service - Sub Task 1',
       completed: true,
       description: null,
-      todoItemId: '3',
+      todoItemId: '3'
     },
     {
       id: '8',
       title: 'Create Entity Service - Sub Task 2',
       completed: false,
       description: null,
-      todoItemId: '3',
+      todoItemId: '3'
     },
     {
       id: '9',
       title: 'Create Entity Service - Sub Task 3',
       completed: false,
       description: null,
-      todoItemId: '3',
+      todoItemId: '3'
     },
     {
       id: '10',
       title: 'Add Todo Item Resolver - Sub Task 1',
       completed: true,
       description: null,
-      todoItemId: '4',
+      todoItemId: '4'
     },
     {
       completed: false,
       description: null,
       id: '11',
       title: 'Add Todo Item Resolver - Sub Task 2',
-      todoItemId: '4',
+      todoItemId: '4'
     },
     {
       completed: false,
       description: null,
       id: '12',
       title: 'Add Todo Item Resolver - Sub Task 3',
-      todoItemId: '4',
+      todoItemId: '4'
     },
     {
       completed: true,
       description: null,
       id: '13',
       title: 'How to create item With Sub Tasks - Sub Task 1',
-      todoItemId: '5',
+      todoItemId: '5'
     },
     {
       completed: false,
       description: null,
       id: '14',
       title: 'How to create item With Sub Tasks - Sub Task 2',
-      todoItemId: '5',
+      todoItemId: '5'
     },
     {
       completed: false,
       description: null,
       id: '15',
       title: 'How to create item With Sub Tasks - Sub Task 3',
-      todoItemId: '5',
-    },
-  ];
+      todoItemId: '5'
+    }
+  ]
 
   describe('find one', () => {
     it(`should require auth token`, () =>
@@ -125,10 +126,10 @@ describe('SubTaskResolver (auth - e2e)', () => {
           subTask(id: 1) {
             ${subTaskFields}
           }
-        }`,
+        }`
         })
         .expect(200)
-        .then(({ body }) => expect(body.errors[0].message).toBe('Unauthorized')));
+        .then(({ body }) => expect(body.errors[0].message).toBe('Unauthorized')))
     it(`should a sub task by id`, () =>
       request(app.getHttpServer())
         .post('/graphql')
@@ -140,7 +141,7 @@ describe('SubTaskResolver (auth - e2e)', () => {
           subTask(id: 1) {
             ${subTaskFields}
           }
-        }`,
+        }`
         })
         .expect(200)
         .then(({ body }) => {
@@ -151,13 +152,13 @@ describe('SubTaskResolver (auth - e2e)', () => {
                 title: 'Create Nest App - Sub Task 1',
                 completed: true,
                 description: null,
-                todoItemId: '1',
-              },
-            },
-          });
-        }));
+                todoItemId: '1'
+              }
+            }
+          })
+        }))
 
-    it(`should return null if the sub task is not found`, () =>
+    it(`should throw item not found on non existing sub task`, () =>
       request(app.getHttpServer())
         .post('/graphql')
         .auth(jwtToken, { type: 'bearer' })
@@ -168,13 +169,13 @@ describe('SubTaskResolver (auth - e2e)', () => {
           subTask(id: 100) {
             ${subTaskFields}
           }
-        }`,
+        }`
         })
-        .expect(200, {
-          data: {
-            subTask: null,
-          },
-        }));
+        .expect(200)
+        .then(({ body }) => {
+          expect(body.errors).toHaveLength(1)
+          expect(body.errors[0].message).toContain('Unable to find')
+        }))
 
     it(`should return a todo item relation`, () =>
       request(app.getHttpServer())
@@ -189,7 +190,7 @@ describe('SubTaskResolver (auth - e2e)', () => {
               ${todoItemFields}
             }
           }
-        }`,
+        }`
         })
         .expect(200)
         .then(({ body }) => {
@@ -201,13 +202,13 @@ describe('SubTaskResolver (auth - e2e)', () => {
                   title: 'Create Nest App',
                   completed: true,
                   description: null,
-                  age: expect.any(Number),
-                },
-              },
-            },
-          });
-        }));
-  });
+                  age: expect.any(Number)
+                }
+              }
+            }
+          })
+        }))
+  })
 
   describe('query', () => {
     it(`should require an auth token`, () =>
@@ -222,10 +223,10 @@ describe('SubTaskResolver (auth - e2e)', () => {
             ${edgeNodes(subTaskFields)}
             totalCount
           }
-        }`,
+        }`
         })
         .expect(200)
-        .then(({ body }) => expect(body.errors[0].message).toBe('Unauthorized')));
+        .then(({ body }) => expect(body.errors[0].message).toBe('Unauthorized')))
     it(`should return a connection`, () =>
       request(app.getHttpServer())
         .post('/graphql')
@@ -239,21 +240,21 @@ describe('SubTaskResolver (auth - e2e)', () => {
             ${edgeNodes(subTaskFields)}
             totalCount
           }
-        }`,
+        }`
         })
         .expect(200)
         .then(({ body }) => {
-          const { edges, pageInfo, totalCount }: CursorConnectionType<SubTaskDTO> = body.data.subTasks;
+          const { edges, pageInfo, totalCount }: CursorConnectionType<SubTaskDTO> = body.data.subTasks
           expect(pageInfo).toEqual({
             endCursor: 'YXJyYXljb25uZWN0aW9uOjk=',
             hasNextPage: true,
             hasPreviousPage: false,
-            startCursor: 'YXJyYXljb25uZWN0aW9uOjA=',
-          });
-          expect(totalCount).toBe(15);
-          expect(edges).toHaveLength(10);
-          expect(edges.map((e) => e.node)).toEqual(subTasks.slice(0, 10));
-        }));
+            startCursor: 'YXJyYXljb25uZWN0aW9uOjA='
+          })
+          expect(totalCount).toBe(15)
+          expect(edges).toHaveLength(10)
+          expect(edges.map((e) => e.node)).toEqual(subTasks.slice(0, 10))
+        }))
 
     it(`should allow querying`, () =>
       request(app.getHttpServer())
@@ -268,21 +269,21 @@ describe('SubTaskResolver (auth - e2e)', () => {
             ${edgeNodes(subTaskFields)}
             totalCount
           }
-        }`,
+        }`
         })
         .expect(200)
         .then(({ body }) => {
-          const { edges, pageInfo, totalCount }: CursorConnectionType<SubTaskDTO> = body.data.subTasks;
+          const { edges, pageInfo, totalCount }: CursorConnectionType<SubTaskDTO> = body.data.subTasks
           expect(pageInfo).toEqual({
             endCursor: 'YXJyYXljb25uZWN0aW9uOjI=',
             hasNextPage: false,
             hasPreviousPage: false,
-            startCursor: 'YXJyYXljb25uZWN0aW9uOjA=',
-          });
-          expect(totalCount).toBe(3);
-          expect(edges).toHaveLength(3);
-          expect(edges.map((e) => e.node)).toEqual(subTasks.slice(0, 3));
-        }));
+            startCursor: 'YXJyYXljb25uZWN0aW9uOjA='
+          })
+          expect(totalCount).toBe(3)
+          expect(edges).toHaveLength(3)
+          expect(edges.map((e) => e.node)).toEqual(subTasks.slice(0, 3))
+        }))
 
     it(`should allow querying on todoItem`, () =>
       request(app.getHttpServer())
@@ -297,21 +298,21 @@ describe('SubTaskResolver (auth - e2e)', () => {
             ${edgeNodes(subTaskFields)}
             totalCount
           }
-        }`,
+        }`
         })
         .expect(200)
         .then(({ body }) => {
-          const { edges, pageInfo, totalCount }: CursorConnectionType<SubTaskDTO> = body.data.subTasks;
+          const { edges, pageInfo, totalCount }: CursorConnectionType<SubTaskDTO> = body.data.subTasks
           expect(pageInfo).toEqual({
             endCursor: 'YXJyYXljb25uZWN0aW9uOjU=',
             hasNextPage: false,
             hasPreviousPage: false,
-            startCursor: 'YXJyYXljb25uZWN0aW9uOjA=',
-          });
-          expect(totalCount).toBe(6);
-          expect(edges).toHaveLength(6);
-          expect(edges.map((e) => e.node)).toEqual(subTasks.slice(3, 9));
-        }));
+            startCursor: 'YXJyYXljb25uZWN0aW9uOjA='
+          })
+          expect(totalCount).toBe(6)
+          expect(edges).toHaveLength(6)
+          expect(edges.map((e) => e.node)).toEqual(subTasks.slice(3, 9))
+        }))
 
     it(`should allow sorting`, () =>
       request(app.getHttpServer())
@@ -326,21 +327,21 @@ describe('SubTaskResolver (auth - e2e)', () => {
             ${edgeNodes(subTaskFields)}
             totalCount
           }
-        }`,
+        }`
         })
         .expect(200)
         .then(({ body }) => {
-          const { edges, pageInfo, totalCount }: CursorConnectionType<SubTaskDTO> = body.data.subTasks;
+          const { edges, pageInfo, totalCount }: CursorConnectionType<SubTaskDTO> = body.data.subTasks
           expect(pageInfo).toEqual({
             endCursor: 'YXJyYXljb25uZWN0aW9uOjk=',
             hasNextPage: true,
             hasPreviousPage: false,
-            startCursor: 'YXJyYXljb25uZWN0aW9uOjA=',
-          });
-          expect(totalCount).toBe(15);
-          expect(edges).toHaveLength(10);
-          expect(edges.map((e) => e.node)).toEqual(subTasks.slice().reverse().slice(0, 10));
-        }));
+            startCursor: 'YXJyYXljb25uZWN0aW9uOjA='
+          })
+          expect(totalCount).toBe(15)
+          expect(edges).toHaveLength(10)
+          expect(edges.map((e) => e.node)).toEqual(subTasks.slice().reverse().slice(0, 10))
+        }))
 
     describe('paging', () => {
       it(`should allow paging with the 'first' field`, () =>
@@ -356,21 +357,21 @@ describe('SubTaskResolver (auth - e2e)', () => {
             ${edgeNodes(subTaskFields)}
             totalCount
           }
-        }`,
+        }`
           })
           .expect(200)
           .then(({ body }) => {
-            const { edges, pageInfo, totalCount }: CursorConnectionType<SubTaskDTO> = body.data.subTasks;
+            const { edges, pageInfo, totalCount }: CursorConnectionType<SubTaskDTO> = body.data.subTasks
             expect(pageInfo).toEqual({
               endCursor: 'YXJyYXljb25uZWN0aW9uOjE=',
               hasNextPage: true,
               hasPreviousPage: false,
-              startCursor: 'YXJyYXljb25uZWN0aW9uOjA=',
-            });
-            expect(totalCount).toBe(15);
-            expect(edges).toHaveLength(2);
-            expect(edges.map((e) => e.node)).toEqual(subTasks.slice(0, 2));
-          }));
+              startCursor: 'YXJyYXljb25uZWN0aW9uOjA='
+            })
+            expect(totalCount).toBe(15)
+            expect(edges).toHaveLength(2)
+            expect(edges.map((e) => e.node)).toEqual(subTasks.slice(0, 2))
+          }))
 
       it(`should allow paging with the 'first' field and 'after'`, () =>
         request(app.getHttpServer())
@@ -385,23 +386,23 @@ describe('SubTaskResolver (auth - e2e)', () => {
             ${edgeNodes(subTaskFields)}
             totalCount
           }
-        }`,
+        }`
           })
           .expect(200)
           .then(({ body }) => {
-            const { edges, pageInfo, totalCount }: CursorConnectionType<SubTaskDTO> = body.data.subTasks;
+            const { edges, pageInfo, totalCount }: CursorConnectionType<SubTaskDTO> = body.data.subTasks
             expect(pageInfo).toEqual({
               endCursor: 'YXJyYXljb25uZWN0aW9uOjM=',
               hasNextPage: true,
               hasPreviousPage: true,
-              startCursor: 'YXJyYXljb25uZWN0aW9uOjI=',
-            });
-            expect(totalCount).toBe(15);
-            expect(edges).toHaveLength(2);
-            expect(edges.map((e) => e.node)).toEqual(subTasks.slice(2, 4));
-          }));
-    });
-  });
+              startCursor: 'YXJyYXljb25uZWN0aW9uOjI='
+            })
+            expect(totalCount).toBe(15)
+            expect(edges).toHaveLength(2)
+            expect(edges.map((e) => e.node)).toEqual(subTasks.slice(2, 4))
+          }))
+    })
+  })
 
   describe('aggregate', () => {
     it(`should require an auth token`, () =>
@@ -414,10 +415,10 @@ describe('SubTaskResolver (auth - e2e)', () => {
           subTaskAggregate {
               ${subTaskAggregateFields}
             }
-        }`,
+        }`
         })
         .expect(200)
-        .then(({ body }) => expect(body.errors[0].message).toBe('Unauthorized')));
+        .then(({ body }) => expect(body.errors[0].message).toBe('Unauthorized')))
 
     it(`should return a aggregate response`, () =>
       request(app.getHttpServer())
@@ -430,11 +431,11 @@ describe('SubTaskResolver (auth - e2e)', () => {
           subTaskAggregate {
               ${subTaskAggregateFields}
             }
-        }`,
+        }`
         })
         .expect(200)
         .then(({ body }) => {
-          const res: AggregateResponse<TodoItemDTO>[] = body.data.subTaskAggregate;
+          const res: AggregateResponse<TodoItemDTO>[] = body.data.subTaskAggregate
           expect(res).toEqual([
             {
               count: { id: 15, title: 15, description: 0, completed: 15, todoItemId: 15 },
@@ -445,11 +446,11 @@ describe('SubTaskResolver (auth - e2e)', () => {
                 id: '15',
                 title: 'How to create item With Sub Tasks - Sub Task 3',
                 description: null,
-                todoItemId: '5',
-              },
-            },
-          ]);
-        }));
+                todoItemId: '5'
+              }
+            }
+          ])
+        }))
 
     it(`should allow filtering`, () =>
       request(app.getHttpServer())
@@ -462,11 +463,11 @@ describe('SubTaskResolver (auth - e2e)', () => {
           subTaskAggregate(filter: {completed: {is: true}}) {
               ${subTaskAggregateFields}
             }
-        }`,
+        }`
         })
         .expect(200)
         .then(({ body }) => {
-          const res: AggregateResponse<TodoItemDTO>[] = body.data.subTaskAggregate;
+          const res: AggregateResponse<TodoItemDTO>[] = body.data.subTaskAggregate
           expect(res).toEqual([
             {
               count: { id: 5, title: 5, description: 0, completed: 5, todoItemId: 5 },
@@ -477,12 +478,12 @@ describe('SubTaskResolver (auth - e2e)', () => {
                 id: '13',
                 title: 'How to create item With Sub Tasks - Sub Task 1',
                 description: null,
-                todoItemId: '5',
-              },
-            },
-          ]);
-        }));
-  });
+                todoItemId: '5'
+              }
+            }
+          ])
+        }))
+  })
 
   describe('create one', () => {
     it('should require an auth token', () =>
@@ -499,10 +500,10 @@ describe('SubTaskResolver (auth - e2e)', () => {
             ) {
               ${subTaskFields}
             }
-        }`,
+        }`
         })
         .expect(200)
-        .then(({ body }) => expect(body.errors[0].message).toBe('Unauthorized')));
+        .then(({ body }) => expect(body.errors[0].message).toBe('Unauthorized')))
     it('should allow creating a subTask', () =>
       request(app.getHttpServer())
         .post('/graphql')
@@ -519,7 +520,7 @@ describe('SubTaskResolver (auth - e2e)', () => {
               ${subTaskFields}
               createdBy
             }
-        }`,
+        }`
         })
         .expect(200, {
           data: {
@@ -529,10 +530,10 @@ describe('SubTaskResolver (auth - e2e)', () => {
               description: null,
               completed: false,
               todoItemId: '1',
-              createdBy: 'nestjs-query',
-            },
-          },
-        }));
+              createdBy: 'nestjs-query'
+            }
+          }
+        }))
 
     it('should validate a subTask', () =>
       request(app.getHttpServer())
@@ -549,14 +550,14 @@ describe('SubTaskResolver (auth - e2e)', () => {
             ) {
               ${subTaskFields}
             }
-        }`,
+        }`
         })
         .expect(200)
         .then(({ body }) => {
-          expect(body.errors).toHaveLength(1);
-          expect(JSON.stringify(body.errors[0])).toContain('title should not be empty');
-        }));
-  });
+          expect(body.errors).toHaveLength(1)
+          expect(JSON.stringify(body.errors[0])).toContain('title should not be empty')
+        }))
+  })
 
   describe('create many', () => {
     it('should require an auth token', () =>
@@ -576,10 +577,10 @@ describe('SubTaskResolver (auth - e2e)', () => {
             ) {
               ${subTaskFields}
             }
-        }`,
+        }`
         })
         .expect(200)
-        .then(({ body }) => expect(body.errors[0].message).toBe('Unauthorized')));
+        .then(({ body }) => expect(body.errors[0].message).toBe('Unauthorized')))
     it('should allow creating a subTask', () =>
       request(app.getHttpServer())
         .post('/graphql')
@@ -599,7 +600,7 @@ describe('SubTaskResolver (auth - e2e)', () => {
               ${subTaskFields}
               createdBy
             }
-        }`,
+        }`
         })
         .expect(200, {
           data: {
@@ -610,7 +611,7 @@ describe('SubTaskResolver (auth - e2e)', () => {
                 description: null,
                 completed: false,
                 todoItemId: '2',
-                createdBy: 'nestjs-query',
+                createdBy: 'nestjs-query'
               },
               {
                 id: '48',
@@ -618,11 +619,11 @@ describe('SubTaskResolver (auth - e2e)', () => {
                 description: null,
                 completed: true,
                 todoItemId: '2',
-                createdBy: 'nestjs-query',
-              },
-            ],
-          },
-        }));
+                createdBy: 'nestjs-query'
+              }
+            ]
+          }
+        }))
 
     it('should validate a subTask', () =>
       request(app.getHttpServer())
@@ -639,14 +640,14 @@ describe('SubTaskResolver (auth - e2e)', () => {
             ) {
               ${subTaskFields}
             }
-        }`,
+        }`
         })
         .expect(200)
         .then(({ body }) => {
-          expect(body.errors).toHaveLength(1);
-          expect(JSON.stringify(body.errors[0])).toContain('title should not be empty');
-        }));
-  });
+          expect(body.errors).toHaveLength(1)
+          expect(JSON.stringify(body.errors[0])).toContain('title should not be empty')
+        }))
+  })
 
   describe('update one', () => {
     it('should require an auth token', () =>
@@ -664,10 +665,10 @@ describe('SubTaskResolver (auth - e2e)', () => {
             ) {
               ${subTaskFields}
             }
-        }`,
+        }`
         })
         .expect(200)
-        .then(({ body }) => expect(body.errors[0].message).toBe('Unauthorized')));
+        .then(({ body }) => expect(body.errors[0].message).toBe('Unauthorized')))
     it('should allow updating a subTask', () =>
       request(app.getHttpServer())
         .post('/graphql')
@@ -685,7 +686,7 @@ describe('SubTaskResolver (auth - e2e)', () => {
               ${subTaskFields}
               updatedBy
             }
-        }`,
+        }`
         })
         .expect(200, {
           data: {
@@ -695,10 +696,10 @@ describe('SubTaskResolver (auth - e2e)', () => {
               description: null,
               completed: true,
               todoItemId: '1',
-              updatedBy: 'nestjs-query',
-            },
-          },
-        }));
+              updatedBy: 'nestjs-query'
+            }
+          }
+        }))
 
     it('should require an id', () =>
       request(app.getHttpServer())
@@ -717,15 +718,13 @@ describe('SubTaskResolver (auth - e2e)', () => {
               title
               completed
             }
-        }`,
+        }`
         })
         .expect(400)
         .then(({ body }) => {
-          expect(body.errors).toHaveLength(1);
-          expect(body.errors[0].message).toBe(
-            'Field "UpdateOneSubTaskInput.id" of required type "ID!" was not provided.',
-          );
-        }));
+          expect(body.errors).toHaveLength(1)
+          expect(body.errors[0].message).toBe('Field "UpdateOneSubTaskInput.id" of required type "ID!" was not provided.')
+        }))
 
     it('should validate an update', () =>
       request(app.getHttpServer())
@@ -745,14 +744,14 @@ describe('SubTaskResolver (auth - e2e)', () => {
               title
               completed
             }
-        }`,
+        }`
         })
         .expect(200)
         .then(({ body }) => {
-          expect(body.errors).toHaveLength(1);
-          expect(JSON.stringify(body.errors[0])).toContain('title should not be empty');
-        }));
-  });
+          expect(body.errors).toHaveLength(1)
+          expect(JSON.stringify(body.errors[0])).toContain('title should not be empty')
+        }))
+  })
 
   describe('update many', () => {
     it('should require an auth token', () =>
@@ -770,10 +769,10 @@ describe('SubTaskResolver (auth - e2e)', () => {
             ) {
               updatedCount
             }
-        }`,
+        }`
         })
         .expect(200)
-        .then(({ body }) => expect(body.errors[0].message).toBe('Unauthorized')));
+        .then(({ body }) => expect(body.errors[0].message).toBe('Unauthorized')))
     it('should allow updating a subTask', () =>
       request(app.getHttpServer())
         .post('/graphql')
@@ -790,15 +789,15 @@ describe('SubTaskResolver (auth - e2e)', () => {
             ) {
               updatedCount
             }
-        }`,
+        }`
         })
         .expect(200, {
           data: {
             updateManySubTasks: {
-              updatedCount: 2,
-            },
-          },
-        }));
+              updatedCount: 2
+            }
+          }
+        }))
 
     it('should require a filter', () =>
       request(app.getHttpServer())
@@ -815,15 +814,15 @@ describe('SubTaskResolver (auth - e2e)', () => {
             ) {
               updatedCount
             }
-        }`,
+        }`
         })
         .expect(400)
         .then(({ body }) => {
-          expect(body.errors).toHaveLength(1);
+          expect(body.errors).toHaveLength(1)
           expect(body.errors[0].message).toBe(
-            'Field "UpdateManySubTasksInput.filter" of required type "SubTaskUpdateFilter!" was not provided.',
-          );
-        }));
+            'Field "UpdateManySubTasksInput.filter" of required type "SubTaskUpdateFilter!" was not provided.'
+          )
+        }))
 
     it('should require a non-empty filter', () =>
       request(app.getHttpServer())
@@ -841,14 +840,14 @@ describe('SubTaskResolver (auth - e2e)', () => {
             ) {
               updatedCount
             }
-        }`,
+        }`
         })
         .expect(200)
         .then(({ body }) => {
-          expect(body.errors).toHaveLength(1);
-          expect(JSON.stringify(body.errors[0])).toContain('filter must be a non-empty object');
-        }));
-  });
+          expect(body.errors).toHaveLength(1)
+          expect(JSON.stringify(body.errors[0])).toContain('filter must be a non-empty object')
+        }))
+  })
 
   describe('delete one', () => {
     it('should require an auth token', () =>
@@ -863,10 +862,10 @@ describe('SubTaskResolver (auth - e2e)', () => {
             ) {
               ${subTaskFields}
             }
-        }`,
+        }`
         })
         .expect(200)
-        .then(({ body }) => expect(body.errors[0].message).toBe('Unauthorized')));
+        .then(({ body }) => expect(body.errors[0].message).toBe('Unauthorized')))
 
     it('should allow deleting a subTask', () =>
       request(app.getHttpServer())
@@ -881,7 +880,7 @@ describe('SubTaskResolver (auth - e2e)', () => {
             ) {
               ${subTaskFields}
             }
-        }`,
+        }`
         })
         .expect(200, {
           data: {
@@ -890,10 +889,10 @@ describe('SubTaskResolver (auth - e2e)', () => {
               title: 'Update Test Sub Task',
               completed: true,
               description: null,
-              todoItemId: '1',
-            },
-          },
-        }));
+              todoItemId: '1'
+            }
+          }
+        }))
 
     it('should require an id', () =>
       request(app.getHttpServer())
@@ -908,16 +907,14 @@ describe('SubTaskResolver (auth - e2e)', () => {
             ) {
               ${subTaskFields}
             }
-        }`,
+        }`
         })
         .expect(400)
         .then(({ body }) => {
-          expect(body.errors).toHaveLength(1);
-          expect(body.errors[0].message).toBe(
-            'Field "DeleteOneSubTaskInput.id" of required type "ID!" was not provided.',
-          );
-        }));
-  });
+          expect(body.errors).toHaveLength(1)
+          expect(body.errors[0].message).toBe('Field "DeleteOneSubTaskInput.id" of required type "ID!" was not provided.')
+        }))
+  })
 
   describe('delete many', () => {
     it('should require an auth token', () =>
@@ -934,10 +931,10 @@ describe('SubTaskResolver (auth - e2e)', () => {
             ) {
               deletedCount
             }
-        }`,
+        }`
         })
         .expect(200)
-        .then(({ body }) => expect(body.errors[0].message).toBe('Unauthorized')));
+        .then(({ body }) => expect(body.errors[0].message).toBe('Unauthorized')))
     it('should allow deleting multiple subTasks', () =>
       request(app.getHttpServer())
         .post('/graphql')
@@ -953,15 +950,15 @@ describe('SubTaskResolver (auth - e2e)', () => {
             ) {
               deletedCount
             }
-        }`,
+        }`
         })
         .expect(200, {
           data: {
             deleteManySubTasks: {
-              deletedCount: 2,
-            },
-          },
-        }));
+              deletedCount: 2
+            }
+          }
+        }))
 
     it('should require a filter', () =>
       request(app.getHttpServer())
@@ -976,15 +973,15 @@ describe('SubTaskResolver (auth - e2e)', () => {
             ) {
               deletedCount
             }
-        }`,
+        }`
         })
         .expect(400)
         .then(({ body }) => {
-          expect(body.errors).toHaveLength(1);
+          expect(body.errors).toHaveLength(1)
           expect(body.errors[0].message).toBe(
-            'Field "DeleteManySubTasksInput.filter" of required type "SubTaskDeleteFilter!" was not provided.',
-          );
-        }));
+            'Field "DeleteManySubTasksInput.filter" of required type "SubTaskDeleteFilter!" was not provided.'
+          )
+        }))
 
     it('should require a non-empty filter', () =>
       request(app.getHttpServer())
@@ -1001,14 +998,14 @@ describe('SubTaskResolver (auth - e2e)', () => {
             ) {
               deletedCount
             }
-        }`,
+        }`
         })
         .expect(200)
         .then(({ body }) => {
-          expect(body.errors).toHaveLength(1);
-          expect(JSON.stringify(body.errors[0])).toContain('filter must be a non-empty object');
-        }));
-  });
+          expect(body.errors).toHaveLength(1)
+          expect(JSON.stringify(body.errors[0])).toContain('filter must be a non-empty object')
+        }))
+  })
 
   describe('setTodoItemOnSubTask', () => {
     it('should require an auth token', () =>
@@ -1025,10 +1022,10 @@ describe('SubTaskResolver (auth - e2e)', () => {
               ${todoItemFields}
             }
           }
-        }`,
+        }`
         })
         .expect(200)
-        .then(({ body }) => expect(body.errors[0].message).toBe('Unauthorized')));
+        .then(({ body }) => expect(body.errors[0].message).toBe('Unauthorized')))
     it('should set a the todoItem on a subTask', () =>
       request(app.getHttpServer())
         .post('/graphql')
@@ -1044,7 +1041,7 @@ describe('SubTaskResolver (auth - e2e)', () => {
               ${todoItemFields}
             }
           }
-        }`,
+        }`
         })
         .expect(200)
         .then(({ body }) => {
@@ -1058,12 +1055,12 @@ describe('SubTaskResolver (auth - e2e)', () => {
                   title: 'Create Entity',
                   completed: false,
                   description: null,
-                  age: expect.any(Number),
-                },
-              },
-            },
-          });
-        }));
+                  age: expect.any(Number)
+                }
+              }
+            }
+          })
+        }))
     it('should not allow setting a the todoItem that does not belong to the user on a subTask', () =>
       request(app.getHttpServer())
         .post('/graphql')
@@ -1079,13 +1076,13 @@ describe('SubTaskResolver (auth - e2e)', () => {
               ${todoItemFields}
             }
           }
-        }`,
+        }`
         })
         .expect(200)
         .then(({ body }) => {
-          expect(body.errors).toHaveLength(1);
-          expect(body.errors[0].message).toContain('Unable to find todoItem to set on SubTaskEntity');
-        }));
+          expect(body.errors).toHaveLength(1)
+          expect(body.errors[0].message).toContain('Unable to find')
+        }))
     it('should not allow setting a the todoItem on a subTask that does not belong to the user', () =>
       request(app.getHttpServer())
         .post('/graphql')
@@ -1101,16 +1098,16 @@ describe('SubTaskResolver (auth - e2e)', () => {
               ${todoItemFields}
             }
           }
-        }`,
+        }`
         })
         .expect(200)
         .then(({ body }) => {
-          expect(body.errors).toHaveLength(1);
-          expect(body.errors[0].message).toContain('Unable to find SubTaskEntity with id: 16');
-        }));
-  });
+          expect(body.errors).toHaveLength(1)
+          expect(body.errors[0].message).toContain('Unable to find')
+        }))
+  })
 
   afterAll(async () => {
-    await app.close();
-  });
-});
+    await app.close()
+  })
+})

@@ -1,9 +1,9 @@
 export const todoItemFields = `
     id
     title
-    completed
+    isCompleted
     description
-  `;
+  `
 
 export const subTaskFields = `
 id
@@ -11,12 +11,12 @@ title
 description
 completed
 todoItemId
-`;
+`
 
 export const tagFields = `
 id
 name
-`;
+`
 
 export const pageInfoField = `
 pageInfo{
@@ -25,7 +25,7 @@ pageInfo{
   startCursor
   endCursor
 }
-`;
+`
 
 export const edgeNodes = (fields: string): string => `
   edges {
@@ -34,4 +34,4 @@ export const edgeNodes = (fields: string): string => `
     }
     cursor
   }  
-  `;
+  `
