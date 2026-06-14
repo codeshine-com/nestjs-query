@@ -1,6 +1,6 @@
 {
   "name": "@codeshine/nestjs-query-sequelize",
-  "version": "9.4.0",
+  "version": "1.0.0",
   "description": "Sequelize adapter for @codeshine/nestjs-query-core",
   "homepage": "https://github.com/tripss/nestjs-query#readme",
   "bugs": {

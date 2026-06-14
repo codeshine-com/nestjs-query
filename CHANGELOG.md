@@ -1,4 +1,19 @@
  
+# [1.0.0](https://github.com/codeshine-com/nestjs-query/compare/v0.30.5...v1.0.0) (2026-06-14)
+
+
+### Bug Fixes
+
+* update typeorm type parameters ([b118827](https://github.com/codeshine-com/nestjs-query/commit/b11882719babde1d7fca39ec00d36c9f5f0e6a8b))
+
+
+### Features
+
+* add json field comparisons ([9dc0b83](https://github.com/codeshine-com/nestjs-query/commit/9dc0b8354076e81273cc14d72d75e961bca67191))
+* **filters:** add exists and not exists grouping filters ([7983343](https://github.com/codeshine-com/nestjs-query/commit/7983343e8def9a2ba0da47d419a650dda39c8aca))
+
+
+
 # [9.4.0](https://github.com/TriPSs/nestjs-query/compare/v9.3.0...v9.4.0) (2026-01-20)
 
 

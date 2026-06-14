@@ -1,6 +1,6 @@
 {
   "name": "@codeshine/nestjs-query-typegoose",
-  "version": "9.4.0",
+  "version": "1.0.0",
   "description": "Typegoose adapter for @codeshine/nestjs-query-core",
   "homepage": "https://github.com/tripss/nestjs-query#readme",
   "bugs": {
