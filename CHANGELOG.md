@@ -1,4 +1,8 @@
  
+## [1.0.1](https://github.com/codeshine-com/nestjs-query/compare/v1.0.0...v1.0.1) (2026-07-08)
+
+
+
 # [1.0.0](https://github.com/codeshine-com/nestjs-query/compare/v0.30.5...v1.0.0) (2026-06-14)
 
 
