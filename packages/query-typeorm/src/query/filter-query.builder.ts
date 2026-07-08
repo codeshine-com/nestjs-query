@@ -394,7 +394,7 @@ export class FilterQueryBuilder<Entity> {
 
   public getReferencedRelationsRecursive(
     metadata: EntityMetadata,
-    filter: Filter<unknown>,
+    filter: Filter<unknown> = {},
     selectRelations: SelectRelation<Entity>[] = []
   ): NestedRecord {
     const referencedFields = Array.from(new Set(Object.keys(filter) as (keyof Filter<unknown>)[]))
